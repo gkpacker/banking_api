@@ -19,10 +19,12 @@ defmodule BankingApiWeb.Router do
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", BankingApiWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", BankingApiWeb do
+    pipe_through :api
+
+    post "/users/signup", UserController, :create
+    post "/users/signin", UserController, :signin
+  end
 
   # Enables LiveDashboard only for development
   #
