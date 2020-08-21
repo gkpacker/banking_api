@@ -1,5 +1,3 @@
-require IEx
-
 defmodule BankingApiWeb.Api.UserControllerTest do
   use BankingApiWeb.ConnCase
 
