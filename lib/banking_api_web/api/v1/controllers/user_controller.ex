@@ -1,11 +1,11 @@
-defmodule BankingApiWeb.Api.UserController do
+defmodule BankingApiWeb.Api.V1.UserController do
   use BankingApiWeb, :controller
 
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApiWeb.Auth.Guardian
 
-  action_fallback BankingApiWeb.Api.FallbackController
+  action_fallback BankingApiWeb.Api.V1.FallbackController
 
   def signin(conn, %{"email" => email, "password" => password}) do
     with {:ok, user, token} <- Guardian.authenticate(email, password) do

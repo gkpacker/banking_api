@@ -1,4 +1,4 @@
-defmodule BankingApiWeb.Api.FallbackController do
+defmodule BankingApiWeb.Api.V1.FallbackController do
   @moduledoc """
   Translates controller action results into valid `Plug.Conn` responses.
 

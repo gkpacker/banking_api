@@ -1,4 +1,4 @@
-defmodule BankingApiWeb.Api.UserControllerTest do
+defmodule BankingApiWeb.Api.V1.UserControllerTest do
   use BankingApiWeb.ConnCase
 
   alias BankingApi.Accounts
