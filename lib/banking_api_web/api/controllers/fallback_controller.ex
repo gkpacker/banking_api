@@ -1,4 +1,4 @@
-defmodule BankingApiWeb.FallbackController do
+defmodule BankingApiWeb.Api.FallbackController do
   @moduledoc """
   Translates controller action results into valid `Plug.Conn` responses.
 
@@ -13,4 +13,21 @@ defmodule BankingApiWeb.FallbackController do
     |> put_view(BankingApiWeb.ChangesetView)
     |> render("error.json", changeset: changeset)
   end
+
+  def call(conn, {:error, :not_found = type}) do
+    body = Jason.encode!(%{error: to_string(type)})
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(404, body)
+  end
+
+  def call(conn, {:error, :unauthorized = type}) do
+    body = Jason.encode!(%{error: to_string(type)})
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(401, body)
+  end
 end
+

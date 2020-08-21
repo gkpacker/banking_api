@@ -5,12 +5,13 @@ defmodule BankingApiWeb.Api.UserController do
   alias BankingApi.Accounts.User
   alias BankingApiWeb.Auth.Guardian
 
-  action_fallback BankingApiWeb.FallbackController
+  action_fallback BankingApiWeb.Api.FallbackController
 
   def signin(conn, %{"email" => email, "password" => password}) do
     with {:ok, user, token} <- Guardian.authenticate(email, password) do
       conn
       |> put_status(:created)
+      |> put_resp_content_type("application/json")
       |> render("user.json", %{user: user, token: token})
     end
   end
@@ -20,6 +21,7 @@ defmodule BankingApiWeb.Api.UserController do
     {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
       conn
       |> put_status(:created)
+      |> put_resp_content_type("application/json")
       |> render("user.json", %{user: user, token: token})
     end
   end

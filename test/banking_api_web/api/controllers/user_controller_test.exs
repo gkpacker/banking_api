@@ -23,15 +23,20 @@ defmodule BankingApiWeb.Api.UserControllerTest do
       conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
 
       assert %{
-               "email" => "user@email.com",
-               "token" => token
-             } = json_response(conn, 201)
+        "email" => "user@email.com",
+        "token" => token
+      } = json_response(conn, 201)
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
       conn = post(conn, Routes.user_path(conn, :create), user: @invalid_attrs)
 
-      assert json_response(conn, 422) != %{}
+      assert %{
+        "errors" => %{
+          "email" => ["can't be blank"],
+          "password" => ["can't be blank"]
+        }
+      } == json_response(conn, 422)
     end
   end
 
@@ -47,12 +52,12 @@ defmodule BankingApiWeb.Api.UserControllerTest do
       )
 
       assert %{
-               "email" => "user@email.com",
-               "token" => token
-             } = json_response(conn, 201)
+        "email" => "user@email.com",
+        "token" => token
+      } = json_response(conn, 201)
     end
 
-    test "renders unauthorized when user not found", %{conn: conn, user: user} do
+    test "renders unauthorized when user not found", %{conn: conn, user: _user} do
       conn = post(
         conn,
         Routes.user_path(conn, :signin),
@@ -60,7 +65,9 @@ defmodule BankingApiWeb.Api.UserControllerTest do
         password: "password"
       )
 
-      assert json_response(conn, 401) != %{}
+      assert %{
+        "error" => "unauthorized"
+      } == json_response(conn, 401)
     end
 
     test "renders unauthorized when invalid authentication", %{conn: conn, user: user} do
@@ -71,7 +78,9 @@ defmodule BankingApiWeb.Api.UserControllerTest do
         password: "invalid_password"
       )
 
-      assert json_response(conn, 401) != %{}
+      assert %{
+        "error" => "unauthorized"
+      } == json_response(conn, 401)
     end
   end
 
