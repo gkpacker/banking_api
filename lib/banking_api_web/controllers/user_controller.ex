@@ -3,15 +3,16 @@ defmodule BankingApiWeb.UserController do
 
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
+  alias BankingApiWeb.Auth.Guardian
 
   action_fallback BankingApiWeb.FallbackController
 
   def create(conn, %{"user" => user_params}) do
-    with {:ok, %User{} = user} <- Accounts.create_user(user_params) do
+    with {:ok, %User{} = user} <- Accounts.create_user(user_params),
+    {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.user_path(conn, :show, user))
-      |> render("show.json", user: user)
+      |> render("user.json", %{user: user, token: token})
     end
   end
 end

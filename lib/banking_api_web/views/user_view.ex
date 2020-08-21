@@ -2,9 +2,10 @@ defmodule BankingApiWeb.UserView do
   use BankingApiWeb, :view
   alias BankingApiWeb.UserView
 
-  def render("user.json", %{user: user}) do
-    %{id: user.id,
+  def render("user.json", %{user: user, token: token}) do
+    %{
       email: user.email,
-      encrypted_password: user.encrypted_password}
+      token: token
+    }
   end
 end
