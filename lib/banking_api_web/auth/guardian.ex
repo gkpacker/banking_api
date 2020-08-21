@@ -15,15 +15,19 @@ defmodule BankingApiWeb.Auth.Guardian do
   end
 
   def authenticate(email, password) do
-    with {:ok, user} <- Accounts.get_by_email(email) do
-      case validate_password(password, user.encrypted_password) do
-        true ->
-          create_token(user)
-        false ->
-          {:error, :unauthorized}
-      end
+    email
+    |> Accounts.get_by_email
+    |> authenticate_user(password)
+  end
+
+  defp authenticate_user({:ok, user}, password) do
+    case validate_password(password, user.encrypted_password) do
+      true -> create_token(user)
+      false -> {:error, :unauthorized}
     end
   end
+  defp authenticate_user({:error, :not_found}, _password),
+    do: {:error, :unauthorized}
 
   defp validate_password(password, encrypted_password) do
     Bcrypt.verify_pass(password, encrypted_password)
