@@ -38,6 +38,29 @@ defmodule BankingApi.Accounts do
   def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
+  Gets a single user by email.
+
+  Returns `{:error, :not_found}` if there's no User with given email.
+
+  ## Examples
+
+      iex> get_by_email!(123)
+      {:ok, %User{}}
+
+      iex> get_by_email!(456)
+      {:error, :not_found}
+
+  """
+  def get_by_email(email) do
+    case Repo.get_by(User, email: email) do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, user}
+    end
+  end
+
+  @doc """
   Creates a user.
 
   ## Examples
