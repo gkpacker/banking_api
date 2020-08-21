@@ -1,4 +1,4 @@
-defmodule BankingApiWeb.UserController do
+defmodule BankingApiWeb.Api.UserController do
   use BankingApiWeb, :controller
 
   alias BankingApi.Accounts

@@ -19,7 +19,7 @@ defmodule BankingApiWeb.Router do
     get "/", PageController, :index
   end
 
-  scope "/api", BankingApiWeb do
+  scope "/api", BankingApiWeb.Api do
     pipe_through :api
 
     post "/users/signup", UserController, :create
