@@ -30,6 +30,10 @@ config :banking_api, BankingApiWeb.Endpoint,
   ],
   secret_key_base: secret_key_base
 
+config :banking_api, BankingApiWeb.Auth.Guardian,
+  issuer: "banking_api",
+  secret_key: secret_key_base
+
 # ## Using releases (Elixir v1.9+)
 #
 # If you are doing OTP releases, you need to instruct Phoenix
