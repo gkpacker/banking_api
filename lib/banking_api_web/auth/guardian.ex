@@ -1,4 +1,7 @@
 defmodule BankingApiWeb.Auth.Guardian do
+  @moduledoc """
+  Provides auth operations for users
+  """
   use Guardian, otp_app: :banking_api
 
   alias BankingApi.Accounts
@@ -14,6 +17,26 @@ defmodule BankingApiWeb.Auth.Guardian do
     {:ok,  resource}
   end
 
+  @doc """
+  Authenticates with given `email` and `password`
+
+  Returns `{:ok, %User{}, "very_big_token"}`.
+
+  Returns `{:error, :unauthorized}` if there's no User with given email.
+
+  Returns `{:error, :unauthorized}` if given credentials are invalid.
+
+  ## Examples
+
+      iex> BankingApiWeb.Auth.Guardian.authenticate("user@email.com", "123123")
+      {:ok, %User{}, "very_big_token"}
+
+      iex> BankingApiWeb.Auth.Guardian.authenticate("not@found.com", "123123")
+      {:error, :unauthorized}
+
+      iex> BankingApiWeb.Auth.Guardian.authenticate("user@email.com", "wrong")
+      {:error, :unauthorized}
+  """
   def authenticate(email, password) do
     email
     |> Accounts.get_by_email
