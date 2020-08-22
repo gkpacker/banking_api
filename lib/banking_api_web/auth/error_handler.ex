@@ -1,4 +1,8 @@
 defmodule BankingApiWeb.Auth.ErrorHandler do
+  @moduledoc """
+  Handle authentication related errors
+  """
+
   import Plug.Conn
 
   def auth_error(conn, {type, _reason}, _opts) do

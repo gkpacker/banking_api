@@ -30,4 +30,3 @@ defmodule BankingApiWeb.Api.V1.FallbackController do
     |> send_resp(401, body)
   end
 end
-
