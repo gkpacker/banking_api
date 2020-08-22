@@ -1,4 +1,8 @@
 defmodule BankingApi.Accounts.User do
+  @moduledoc """
+  Represents real users throughout the system
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
