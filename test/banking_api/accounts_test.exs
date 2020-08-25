@@ -15,9 +15,9 @@ defmodule BankingApi.AccountsTest do
     def user_fixture(attrs \\ %{}) do
       user = insert(:user, attrs)
 
-      %User{user | password: nil}
+      %User{user | password: nil, accounts: []}
     end
-      
+
     test "list_users/0 returns all users" do
       user = user_fixture()
       assert Accounts.list_users() == [user]

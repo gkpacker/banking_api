@@ -9,33 +9,41 @@ defmodule BankingApi.Accounts do
   alias BankingApi.Accounts.User
 
   @doc """
-  Returns the list of users.
+  Returns the list of users with its accounts.
 
   ## Examples
 
       iex> list_users()
-      [%User{}, ...]
+      [%User{accounts: [%Account{}]}, ...]
 
   """
   def list_users do
-    Repo.all(User)
+    User
+    |> Repo.all()
+    |> Repo.preload(:accounts)
   end
 
   @doc """
-  Gets a single user.
+  Gets a single user with its accounts.
 
   Raises `Ecto.NoResultsError` if the User does not exist.
 
   ## Examples
 
       iex> get_user!(123)
-      %User{}
+      %User{
+        accounts: [%Account{}, %Account{}]
+      }
 
       iex> get_user!(456)
       ** (Ecto.NoResultsError)
 
   """
-  def get_user!(id), do: Repo.get!(User, id)
+  def get_user!(id) do
+    User
+    |> Repo.get!(id)
+    |> Repo.preload(:accounts)
+  end
 
   @doc """
   Gets a single user by email.
