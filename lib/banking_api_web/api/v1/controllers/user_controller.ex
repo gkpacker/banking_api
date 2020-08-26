@@ -24,10 +24,11 @@ defmodule BankingApiWeb.Api.V1.UserController do
       %{name: "Initial Credit", type: "equity"},
       %{name: "Accounts receivable", type: "equity"}
     ]
+
     user_params = Map.put(user_params, "accounts", initial_accounts)
 
     with {:ok, %User{} = user} <- Accounts.create_user(user_params),
-    {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
+         {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/json")

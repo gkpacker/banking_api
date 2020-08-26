@@ -14,7 +14,7 @@ defmodule BankingApiWeb.Auth.Guardian do
   def resource_from_claims(claims) do
     id = claims["sub"]
     resource = Accounts.get_user!(id)
-    {:ok,  resource}
+    {:ok, resource}
   end
 
   @doc """
@@ -39,7 +39,7 @@ defmodule BankingApiWeb.Auth.Guardian do
   """
   def authenticate(email, password) do
     email
-    |> Accounts.get_by_email
+    |> Accounts.get_by_email()
     |> authenticate_user(password)
   end
 
@@ -49,6 +49,7 @@ defmodule BankingApiWeb.Auth.Guardian do
       false -> {:error, :unauthorized}
     end
   end
+
   defp authenticate_user({:error, :not_found}, _password),
     do: {:error, :unauthorized}
 
