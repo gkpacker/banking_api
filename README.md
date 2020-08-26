@@ -1,4 +1,4 @@
-# BankingApi
+# BankingApi https://github.com/gkpacker/banking_api/workflows/Elixir CI/badge.svg
 
 To start your Phoenix server:
 
