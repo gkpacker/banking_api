@@ -6,8 +6,6 @@ defmodule BankingApi.Bank do
   import Ecto.Query, warn: false
   alias BankingApi.Repo
 
-  alias BankingApi.Accounts
-  alias BankingApi.Accounts.User
   alias BankingApi.Bank.Account
 
   @doc """
@@ -55,32 +53,6 @@ defmodule BankingApi.Bank do
     %Account{}
     |> Account.changeset(attrs)
     |> Repo.insert()
-  end
-
-  @doc """
-  Creates user's initial accounts `Cash`, `Withdraws` and `Initial Credit`.
-
-  ## Examples
-
-      iex> create_initial_accounts(%User{})
-      %User{
-        accounts: [
-          %Account{name: "Initial Credit", type: "equity"},
-          %Account{name: "Cash", type: "asset"},
-          %Account{name: "Withdraws", type: "equity", contra: true}
-        ]
-      }
-  """
-  def create_initial_accounts(%User{id: id}) do
-    initial_accounts = [
-      %{name: "Withdraws", type: "equity", contra: true, user_id: id},
-      %{name: "Cash", type: "asset", user_id: id},
-      %{name: "Initial Credit", type: "equity", user_id: id}
-    ]
-
-    for account <- initial_accounts, do: create_account(account)
-
-    Accounts.get_user!(id)
   end
 
   @doc """

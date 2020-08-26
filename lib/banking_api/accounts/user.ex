@@ -25,6 +25,7 @@ defmodule BankingApi.Accounts.User do
     |> validate_length(:password, min: 6)
     |> unique_constraint(:email)
     |> put_hashed_password()
+    |> cast_assoc(:accounts)
   end
 
   defp put_hashed_password(

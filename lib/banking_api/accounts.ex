@@ -64,7 +64,7 @@ defmodule BankingApi.Accounts do
       nil ->
         {:error, :not_found}
       user ->
-        {:ok, user}
+        {:ok, Repo.preload(user, :accounts)}
     end
   end
 

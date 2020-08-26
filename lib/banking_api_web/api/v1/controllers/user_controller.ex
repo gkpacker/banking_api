@@ -17,6 +17,15 @@ defmodule BankingApiWeb.Api.V1.UserController do
   end
 
   def create(conn, %{"user" => user_params}) do
+    initial_accounts = [
+      %{name: "Drawing", type: "equity", contra: true},
+      %{name: "Accounts payable", type: "liability"},
+      %{name: "Cash", type: "asset"},
+      %{name: "Initial Credit", type: "equity"},
+      %{name: "Accounts receivable", type: "equity"}
+    ]
+    user_params = Map.put(user_params, "accounts", initial_accounts)
+
     with {:ok, %User{} = user} <- Accounts.create_user(user_params),
     {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
       conn

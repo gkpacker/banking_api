@@ -57,16 +57,6 @@ defmodule BankingApi.BankTest do
       assert {:error, %Ecto.Changeset{}} = Bank.create_account(@invalid_type_attrs)
     end
 
-    test "create_initial_accounts/1 create initial accounts for user", %{user: user} do
-      user_with_accounts = Bank.create_initial_accounts(user)
-
-      assert [
-        %Account{name: "Initial Credit", type: "equity"},
-        %Account{name: "Cash", type: "asset"},
-        %Account{name: "Withdraws", type: "equity", contra: true}
-      ] = user_with_accounts.accounts
-    end
-
     test "update_account/2 with valid data updates the account" do
       account = insert(:account)
       assert {:ok, %Account{} = account} = Bank.update_account(account, @update_attrs)
