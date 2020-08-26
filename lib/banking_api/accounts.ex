@@ -63,6 +63,7 @@ defmodule BankingApi.Accounts do
     case Repo.get_by(User, email: email) do
       nil ->
         {:error, :not_found}
+
       user ->
         {:ok, Repo.preload(user, :accounts)}
     end

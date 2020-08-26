@@ -29,9 +29,10 @@ defmodule BankingApi.Accounts.User do
   end
 
   defp put_hashed_password(
-    %Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset
-  ) do
+         %Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset
+       ) do
     put_change(changeset, :encrypted_password, Bcrypt.hash_pwd_salt(password))
   end
+
   defp put_hashed_password(changeset), do: changeset
 end
