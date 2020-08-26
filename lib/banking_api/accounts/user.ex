@@ -5,11 +5,13 @@ defmodule BankingApi.Accounts.User do
 
   use Ecto.Schema
   import Ecto.Changeset
+  alias BankingApi.Bank.Account
 
   schema "users" do
     field :email, :string
     field :encrypted_password, :string
     field :password, :string, virtual: true
+    has_many :accounts, Account, on_delete: :nilify_all
 
     timestamps()
   end
@@ -23,6 +25,7 @@ defmodule BankingApi.Accounts.User do
     |> validate_length(:password, min: 6)
     |> unique_constraint(:email)
     |> put_hashed_password()
+    |> cast_assoc(:accounts)
   end
 
   defp put_hashed_password(

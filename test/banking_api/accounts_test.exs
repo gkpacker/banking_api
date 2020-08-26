@@ -13,12 +13,9 @@ defmodule BankingApi.AccountsTest do
     @invalid_password_attrs %{email: 'user@email.com', password: "short"}
 
     def user_fixture(attrs \\ %{}) do
-      {:ok, user} =
-        attrs
-        |> Enum.into(@valid_attrs)
-        |> Accounts.create_user()
+      user = insert(:user, attrs)
 
-      Map.put(user, :password, nil)
+      %User{user | password: nil, accounts: []}
     end
 
     test "list_users/0 returns all users" do
@@ -45,7 +42,7 @@ defmodule BankingApi.AccountsTest do
     end
 
     test "create_user/1 with existent email returns error changeset" do
-      user_fixture()
+      user_fixture(@valid_attrs)
 
       assert {:error, %Ecto.Changeset{}} = Accounts.create_user(@valid_attrs)
     end

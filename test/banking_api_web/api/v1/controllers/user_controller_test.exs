@@ -28,6 +28,20 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
       } = json_response(conn, 201)
     end
 
+    test "creates user with its initial accounts", %{conn: conn} do
+      conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
+
+      assert %{"email" => email } = json_response(conn, 201)
+      assert {:ok, user} = Accounts.get_by_email(email)
+      assert [
+        %{name: "Accounts receivable", type: "equity"},
+        %{name: "Initial Credit", type: "equity"},
+        %{name: "Cash", type: "asset"},
+        %{name: "Accounts payable", type: "liability"},
+        %{name: "Drawing", type: "equity", contra: true}
+      ] = user.accounts
+    end
+
     test "renders errors when data is invalid", %{conn: conn} do
       conn = post(conn, Routes.user_path(conn, :create), user: @invalid_attrs)
 
