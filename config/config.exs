@@ -13,7 +13,7 @@ config :banking_api,
 # Configures the endpoint
 config :banking_api, BankingApiWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: Mix.env(),
+  secret_key_base: "V9H2jbhDQfw3uCy7NoW9k1z9Ve+f5+XKbMFnpRKIO28AuGglOOKb72T8XEoRjxYl",
   render_errors: [view: BankingApiWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: BankingApi.PubSub,
   live_view: [signing_salt: "QTEowj/p"]
@@ -28,7 +28,7 @@ config :phoenix, :json_library, Jason
 
 config :banking_api, BankingApiWeb.Auth.Guardian,
   issuer: "banking_api",
-  secret_key: Mix.env()
+  secret_key: "KuUT4GJrWZgsmV3YMJbZaf+dk+vGthWtAs4mnwCP7/chjtTnHlrt0UMHO8cPHLKL"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
