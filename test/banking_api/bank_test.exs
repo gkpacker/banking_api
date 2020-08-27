@@ -6,10 +6,10 @@ defmodule BankingApi.BankTest do
   describe "accounts" do
     alias BankingApi.Bank.Account
 
-    @valid_attrs %{contra: false, name: "Cash", type: "asset", user_id: 1}
+    @valid_attrs %{contra: false, name: "Checking", type: "asset", user_id: 1}
     @update_attrs %{contra: true, name: "Drawing", type: "asset"}
     @invalid_attrs %{contra: nil, name: nil, type: nil}
-    @invalid_type_attrs %{contra: false, name: "Cash", type: "invalid"}
+    @invalid_type_attrs %{contra: false, name: "Checking", type: "invalid"}
 
     setup %{} do
       user = insert(:user)
@@ -30,7 +30,7 @@ defmodule BankingApi.BankTest do
     test "create_account/1 with valid data creates a account", %{valid_attrs: valid_attrs} do
       assert {:ok, %Account{} = account} = Bank.create_account(valid_attrs)
       assert account.contra == false
-      assert account.name == "Cash"
+      assert account.name == "Checking"
       assert account.type == "asset"
     end
 

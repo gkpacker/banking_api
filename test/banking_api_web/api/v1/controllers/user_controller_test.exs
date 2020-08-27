@@ -37,7 +37,7 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
       assert [
                %{name: "Accounts receivable", type: "equity"},
                %{name: "Initial Credit", type: "equity"},
-               %{name: "Cash", type: "asset"},
+               %{name: "Checking", type: "asset"},
                %{name: "Accounts payable", type: "liability"},
                %{name: "Drawing", type: "equity", contra: true}
              ] = user.accounts

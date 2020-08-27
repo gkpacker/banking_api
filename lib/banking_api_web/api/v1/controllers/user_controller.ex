@@ -20,7 +20,7 @@ defmodule BankingApiWeb.Api.V1.UserController do
     initial_accounts = [
       %{name: "Drawing", type: "equity", contra: true},
       %{name: "Accounts payable", type: "liability"},
-      %{name: "Cash", type: "asset"},
+      %{name: "Checking", type: "asset"},
       %{name: "Initial Credit", type: "equity"},
       %{name: "Accounts receivable", type: "equity"}
     ]
