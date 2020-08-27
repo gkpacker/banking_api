@@ -4,7 +4,7 @@ defmodule BankingApi.Factory do
   use ExMachina.Ecto, repo: BankingApi.Repo
 
   alias BankingApi.Accounts.User
-  alias BankingApi.Bank.{Transaction, Posting, Account}
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   def user_factory do
     email = sequence(:email, &"user#{&1}@email.com")
