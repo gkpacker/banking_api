@@ -18,12 +18,12 @@ defmodule BankingApi.BankTest do
     end
 
     test "list_accounts/0 returns all accounts" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert Bank.list_accounts() == [account]
     end
 
     test "get_account!/1 returns the account with given id" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert Bank.get_account!(account.id) == account
     end
 
@@ -58,7 +58,7 @@ defmodule BankingApi.BankTest do
     end
 
     test "update_account/2 with valid data updates the account" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:ok, %Account{} = account} = Bank.update_account(account, @update_attrs)
       assert account.contra == true
       assert account.name == "Drawing"
@@ -66,25 +66,25 @@ defmodule BankingApi.BankTest do
     end
 
     test "update_account/2 with invalid data returns error changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_attrs)
       assert account == Bank.get_account!(account.id)
     end
 
     test "update_account/2 with invalid type returns error changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_type_attrs)
       assert account == Bank.get_account!(account.id)
     end
 
     test "delete_account/1 deletes the account" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:ok, %Account{}} = Bank.delete_account(account)
       assert_raise Ecto.NoResultsError, fn -> Bank.get_account!(account.id) end
     end
 
     test "change_account/1 returns a account changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert %Ecto.Changeset{} = Bank.change_account(account)
     end
   end
@@ -105,8 +105,8 @@ defmodule BankingApi.BankTest do
     end
 
     test "create_transaction/1 creates associated posts" do
-      credit_account = insert(:account, name: "Restaurant", type: "liability")
-      debit_account = insert(:account, name: "Checking", type: "asset")
+      credit_account = insert(:credit_account)
+      debit_account = insert(:debit_account)
       date = Date.utc_today()
 
       params = %{

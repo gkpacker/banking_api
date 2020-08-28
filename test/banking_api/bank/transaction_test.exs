@@ -20,8 +20,8 @@ defmodule BankingApi.Bank.TransactionTest do
     end
 
     test "is valid when credits and debits postings balance" do
-      credit_account = insert(:account, name: "Restaurant", type: "liability")
-      debit_account = insert(:account, name: "Checking", type: "asset")
+      credit_account = insert(:credit_account)
+      debit_account = insert(:debit_account)
       date = Date.utc_today()
 
       params = %{
@@ -39,8 +39,8 @@ defmodule BankingApi.Bank.TransactionTest do
     end
 
     test "is valid with many postings when credits and debits balance" do
-      credit_account = insert(:account, name: "Restaurant", type: "liability")
-      debit_account = insert(:account, name: "Checking", type: "asset")
+      credit_account = insert(:credit_account)
+      debit_account = insert(:debit_account)
       date = Date.utc_today()
 
       params = %{
@@ -60,8 +60,8 @@ defmodule BankingApi.Bank.TransactionTest do
     end
 
     test "isn't valid when credits and debits doesn't balance" do
-      credit_account = insert(:account, name: "Restaurant", type: "liability")
-      debit_account = insert(:account, name: "Checking", type: "asset")
+      credit_account = insert(:credit_account)
+      debit_account = insert(:debit_account)
       date = Date.utc_today()
 
       params = %{
