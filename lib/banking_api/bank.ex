@@ -243,4 +243,56 @@ defmodule BankingApi.Bank do
     |> Repo.get!(id)
     |> Repo.preload([:account, :transaction])
   end
+
+  @doc """
+  Sum all credit postings for given account
+
+  ## Examples
+
+      iex> sum_account_credits(account)
+      #Decimal<10000>
+
+      iex> sum_account_credits(account_without_postings)
+      #Decimal<0>
+
+  """
+  def sum_account_credits(%Account{} = account) do
+    [sum] =
+      Posting
+      |> Posting.for_account(account)
+      |> Posting.sum_credits
+      |> Repo.all
+
+    if sum do
+      sum
+    else
+      Decimal.new(0)
+    end
+  end
+
+  @doc """
+  Sum all debit postings for given account
+
+  ## Examples
+
+      iex> sum_account_debits(account)
+      #Decimal<10000>
+
+      iex> sum_account_debits(account_without_postings)
+      #Decimal<0>
+
+  """
+  def sum_account_debits(%Account{} = account) do
+    [sum] =
+      Posting
+      |> Posting.for_account(account)
+      |> Posting.sum_debits
+      |> Repo.all
+
+    if sum do
+      sum
+    else
+      Decimal.new(0)
+    end
+  end
 end

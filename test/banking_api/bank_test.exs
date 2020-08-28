@@ -148,5 +148,35 @@ defmodule BankingApi.BankTest do
 
       assert Bank.get_posting!(posting.id) == posting
     end
+
+    test "sum_account_credits/1 sum account credit postings" do
+      account = insert(:debit_account)
+      insert(:credit, amount: 2000, account: account)
+      insert(:credit, amount: 2000, account: account)
+      insert(:debit, amount: 2000, account: account)
+
+      assert Bank.sum_account_credits(account) == Decimal.new(4000)
+    end
+
+    test "sum_account_credits/1 returns 0 if account doesn't have credits" do
+      account = insert(:debit_account)
+
+      assert Bank.sum_account_credits(account) == Decimal.new(0)
+    end
+
+    test "sum_account_debits/1 sum account debit postings" do
+      account = insert(:debit_account)
+      insert(:debit, amount: 2000, account: account)
+      insert(:debit, amount: 1500, account: account)
+      insert(:credit, amount: 2000, account: account)
+
+      assert Bank.sum_account_debits(account) == Decimal.new(3500)
+    end
+
+    test "sum_account_debits/1 returns 0 if account doesn't have debits" do
+      account = insert(:debit_account)
+
+      assert Bank.sum_account_debits(account) == Decimal.new(0)
+    end
   end
 end

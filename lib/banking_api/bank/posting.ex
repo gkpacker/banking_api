@@ -5,6 +5,7 @@ defmodule BankingApi.Bank.Posting do
 
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query, only: [from: 2]
   alias BankingApi.Bank.{Account, Transaction}
 
   schema "postings" do
@@ -26,5 +27,32 @@ defmodule BankingApi.Bank.Posting do
     |> validate_number(:amount, greater_than_or_equal_to: 0)
     |> assoc_constraint(:account)
     |> assoc_constraint(:transaction)
+  end
+
+  @doc """
+  Returns all postings for an account
+  """
+  def for_account(query, account) do
+    from p in query,
+    join: a in assoc(p, :account),
+    where: a.id == ^account.id
+  end
+
+  @doc """
+  Sum all credit posting amounts for given query
+  """
+  def sum_credits(query) do
+    from p in query,
+    where: p.type == ^"credit",
+    select: sum(p.amount)
+  end
+
+  @doc """
+  Sum all debit posting amounts for given query
+  """
+  def sum_debits(query) do
+    from p in query,
+    where: p.type == ^"debit",
+    select: sum(p.amount)
   end
 end
