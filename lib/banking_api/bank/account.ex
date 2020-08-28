@@ -65,4 +65,30 @@ defmodule BankingApi.Bank.Account do
 
     Decimal.sub(debits, credits)
   end
+
+  def balance([]), do: Decimal.new(0)
+  def balance(accounts) when is_list(accounts) do
+    debit_balance = balance_debit_accounts(accounts)
+    credit_balance = balance_credit_accounts(accounts)
+
+    Decimal.sub(debit_balance, credit_balance)
+  end
+
+  defp balance_debit_accounts(accounts) do
+    debit_accounts = Enum.filter(accounts, fn account -> account.type in @debit_types end)
+
+    balance_same_type_accounts(debit_accounts)
+  end
+
+  defp balance_credit_accounts(accounts) do
+    credit_accounts = Enum.filter(accounts, fn account -> account.type in @credit_types end)
+
+    balance_same_type_accounts(credit_accounts)
+  end
+
+  defp balance_same_type_accounts(accounts) do
+    Enum.reduce(accounts, Decimal.new(0), fn(account, acc) ->
+      Decimal.add(Account.balance(account), acc)
+    end)
+  end
 end

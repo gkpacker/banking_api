@@ -34,5 +34,18 @@ defmodule BankingApi.Bank.AccountTest do
 
       assert Account.balance(account) == Decimal.new(-10_000)
     end
+
+    test "calculates the balance for given accounts when it's a list" do
+      credit_account = insert(:credit_account)
+      insert(:credit, amount: 1000, account: credit_account)
+      debit_account = insert(:debit_account)
+      insert(:debit, amount: 10_000, account: debit_account)
+
+      assert Account.balance([credit_account, debit_account]) == Decimal.new(9_000)
+    end
+
+    test "returns 0 when it's an empty list" do
+      assert Account.balance([]) == Decimal.new(0)
+    end
   end
 end
