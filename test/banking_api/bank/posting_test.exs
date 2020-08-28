@@ -46,14 +46,14 @@ defmodule BankingApi.Bank.PostingTest do
       posting = insert(:debit, account: account)
       another_account_posting = insert(:debit)
 
-      postings_for_account =
+      [first_posting | tail] =
         Posting
         |> Posting.for_account(account)
         |> Repo.all()
         |> Repo.preload([:account, :transaction])
 
-      assert posting in postings_for_account
-      refute another_account_posting in postings_for_account
+      assert posting.id == first_posting.id
+      refute another_account_posting in tail
     end
   end
 

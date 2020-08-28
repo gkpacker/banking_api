@@ -19,12 +19,15 @@ defmodule BankingApi.BankTest do
 
     test "list_accounts/0 returns all accounts" do
       account = insert(:debit_account)
-      assert Bank.list_accounts() == [account]
+
+      assert [first_account] = Bank.list_accounts()
+      assert first_account.id == account.id
     end
 
     test "get_account!/1 returns the account with given id" do
       account = insert(:debit_account)
-      assert Bank.get_account!(account.id) == account
+
+      assert Bank.get_account!(account.id).id == account.id
     end
 
     test "create_account/1 with valid data creates a account", %{valid_attrs: valid_attrs} do
@@ -67,14 +70,16 @@ defmodule BankingApi.BankTest do
 
     test "update_account/2 with invalid data returns error changeset" do
       account = insert(:debit_account)
+
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_attrs)
-      assert account == Bank.get_account!(account.id)
+      assert account.id == Bank.get_account!(account.id).id
     end
 
     test "update_account/2 with invalid type returns error changeset" do
       account = insert(:debit_account)
+
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_type_attrs)
-      assert account == Bank.get_account!(account.id)
+      assert account.id == Bank.get_account!(account.id).id
     end
 
     test "delete_account/1 deletes the account" do
@@ -129,8 +134,8 @@ defmodule BankingApi.BankTest do
 
       assert debit_posting.amount == Decimal.new(1000)
       assert credit_posting.amount == Decimal.new(1000)
-      assert debit_posting.account == credit_account
-      assert credit_posting.account == debit_account
+      assert debit_posting.account.id == credit_account.id
+      assert credit_posting.account.id == debit_account.id
     end
   end
 
@@ -140,13 +145,14 @@ defmodule BankingApi.BankTest do
     test "list_postings/0 returns all postings" do
       posting = insert(:credit)
 
-      assert Bank.list_postings() == [posting]
+      assert [first_posting] = Bank.list_postings()
+      assert first_posting.id == posting.id
     end
 
     test "get_posting!/1 returns the posting with given id" do
       posting = insert(:debit)
 
-      assert Bank.get_posting!(posting.id) == posting
+      assert Bank.get_posting!(posting.id).id == posting.id
     end
 
     test "sum_account_credits/1 sum account credit postings" do
