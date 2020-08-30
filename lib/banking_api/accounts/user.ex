@@ -11,6 +11,8 @@ defmodule BankingApi.Accounts.User do
     field :email, :string
     field :encrypted_password, :string
     field :password, :string, virtual: true
+    field :balance, :decimal, virtual: true, default: 0
+
     has_many :accounts, Account, on_delete: :nilify_all
 
     timestamps()

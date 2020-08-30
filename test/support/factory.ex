@@ -15,41 +15,60 @@ defmodule BankingApi.Factory do
     }
   end
 
-  def account_factory do
-    user = insert(:user)
+  def credit_account_factory(attrs) do
+    user = Map.get(attrs, :user, insert(:user))
+    contra = Map.get(attrs, :contra, false)
+    name = Map.get(attrs, :name, "Accounts Payable")
+    type = Map.get(attrs, :type, "liability")
 
     %Account{
-      name: "Checking",
+      name: name,
+      type: type,
+      contra: contra,
+      user: user
+    }
+  end
+
+  def debit_account_factory(attrs) do
+    user = Map.get(attrs, :user, insert(:user))
+    contra = Map.get(attrs, :contra, false)
+    name = Map.get(attrs, :name, "Checking")
+
+    %Account{
+      name: name,
       type: "asset",
-      user_id: user.id
+      contra: contra,
+      user: user
     }
   end
 
   def transaction_factory do
     %Transaction{
-      name: "Checking",
+      name: "Dinner",
       date: ~D[2000-03-10]
     }
   end
 
-  def debit_factory do
-    account = insert(:account)
-    transaction = insert(:transaction)
+  def debit_factory(attrs) do
+    account = Map.get(attrs, :account, insert(:debit_account))
+    transaction = Map.get(attrs, :transaction, insert(:transaction))
+    amount = Map.get(attrs, :amount, 1000)
 
     %Posting{
-      amount: 1000,
+      amount: amount,
       type: "debit",
       account: account,
       transaction: transaction
     }
   end
 
-  def credit_factory do
-    account = insert(:account)
-    transaction = insert(:transaction)
+  def credit_factory(attrs) do
+    account = Map.get(attrs, :account, insert(:credit_account))
+    transaction = Map.get(attrs, :transaction, insert(:transaction))
+    amount = Map.get(attrs, :amount, 1000)
 
     %Posting{
-      amount: 1000,
+      amount: amount,
       type: "credit",
       account: account,
       transaction: transaction

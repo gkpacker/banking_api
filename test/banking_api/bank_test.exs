@@ -1,11 +1,10 @@
 defmodule BankingApi.BankTest do
-  use BankingApi.DataCase
+  use BankingApi.DataCase, async: true
 
   alias BankingApi.Bank
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   describe "accounts" do
-    alias BankingApi.Bank.Account
-
     @valid_attrs %{contra: false, name: "Checking", type: "asset", user_id: 1}
     @update_attrs %{contra: true, name: "Drawing", type: "asset"}
     @invalid_attrs %{contra: nil, name: nil, type: nil}
@@ -18,13 +17,16 @@ defmodule BankingApi.BankTest do
     end
 
     test "list_accounts/0 returns all accounts" do
-      account = insert(:account)
-      assert Bank.list_accounts() == [account]
+      account = insert(:debit_account)
+
+      assert [first_account] = Bank.list_accounts()
+      assert first_account.id == account.id
     end
 
     test "get_account!/1 returns the account with given id" do
-      account = insert(:account)
-      assert Bank.get_account!(account.id) == account
+      account = insert(:debit_account)
+
+      assert Bank.get_account!(account.id).id == account.id
     end
 
     test "create_account/1 with valid data creates a account", %{valid_attrs: valid_attrs} do
@@ -58,7 +60,7 @@ defmodule BankingApi.BankTest do
     end
 
     test "update_account/2 with valid data updates the account" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:ok, %Account{} = account} = Bank.update_account(account, @update_attrs)
       assert account.contra == true
       assert account.name == "Drawing"
@@ -66,32 +68,41 @@ defmodule BankingApi.BankTest do
     end
 
     test "update_account/2 with invalid data returns error changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
+
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_attrs)
-      assert account == Bank.get_account!(account.id)
+      assert account.id == Bank.get_account!(account.id).id
     end
 
     test "update_account/2 with invalid type returns error changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
+
       assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_type_attrs)
-      assert account == Bank.get_account!(account.id)
+      assert account.id == Bank.get_account!(account.id).id
     end
 
     test "delete_account/1 deletes the account" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert {:ok, %Account{}} = Bank.delete_account(account)
       assert_raise Ecto.NoResultsError, fn -> Bank.get_account!(account.id) end
     end
 
     test "change_account/1 returns a account changeset" do
-      account = insert(:account)
+      account = insert(:debit_account)
       assert %Ecto.Changeset{} = Bank.change_account(account)
+    end
+
+    test "get_and_lock_user_account_by_name!/1 returns a locked account by name" do
+      user = insert(:user)
+      account = insert(:debit_account, name: "Checking", user: user)
+      insert(:debit_account, name: "Cash", user: user)
+      user_account_by_name = Bank.get_and_lock_user_account_by_name!(user, "Checking")
+
+      assert account.id == user_account_by_name.id
     end
   end
 
   describe "transactions" do
-    alias BankingApi.Bank.{Posting, Transaction}
-
     test "list_transactions/0 returns all transactions" do
       transaction = insert(:transaction)
 
@@ -105,8 +116,8 @@ defmodule BankingApi.BankTest do
     end
 
     test "create_transaction/1 creates associated posts" do
-      credit_account = insert(:account, name: "Restaurant", type: "liability")
-      debit_account = insert(:account, name: "Checking", type: "asset")
+      credit_account = insert(:credit_account)
+      debit_account = insert(:debit_account)
       date = Date.utc_today()
 
       params = %{
@@ -129,24 +140,102 @@ defmodule BankingApi.BankTest do
 
       assert debit_posting.amount == Decimal.new(1000)
       assert credit_posting.amount == Decimal.new(1000)
-      assert debit_posting.account == credit_account
-      assert credit_posting.account == debit_account
+      assert debit_posting.account.id == credit_account.id
+      assert credit_posting.account.id == debit_account.id
+    end
+
+    test "give_initial_credits_to_user/1 gives R$ 1000,00 credits to user" do
+      user = insert(:user)
+
+      insert(
+        :credit_account,
+        type: "equity",
+        name: Account.initial_credits_account_name(),
+        user: user
+      )
+
+      insert(
+        :debit_account,
+        name: Account.checking_account_name(),
+        user: user
+      )
+
+      assert {:ok, user_with_balance} = Bank.give_initial_credits_to_user(user)
+      assert user_with_balance.balance == Decimal.new(100_000)
     end
   end
 
   describe "postings" do
-    alias BankingApi.Bank.Posting
-
     test "list_postings/0 returns all postings" do
       posting = insert(:credit)
 
-      assert Bank.list_postings() == [posting]
+      assert [first_posting] = Bank.list_postings()
+      assert first_posting.id == posting.id
     end
 
     test "get_posting!/1 returns the posting with given id" do
       posting = insert(:debit)
 
-      assert Bank.get_posting!(posting.id) == posting
+      assert Bank.get_posting!(posting.id).id == posting.id
+    end
+
+    test "sum_account_credits/1 sum account credit postings" do
+      account = insert(:debit_account)
+      insert(:credit, amount: 2000, account: account)
+      insert(:credit, amount: 2000, account: account)
+      insert(:debit, amount: 2000, account: account)
+
+      assert Bank.sum_account_credits(account) == Decimal.new(4000)
+    end
+
+    test "sum_account_credits/1 returns 0 if account doesn't have credits" do
+      account = insert(:debit_account)
+
+      assert Bank.sum_account_credits(account) == Decimal.new(0)
+    end
+
+    test "sum_account_debits/1 sum account debit postings" do
+      account = insert(:debit_account)
+      insert(:debit, amount: 2000, account: account)
+      insert(:debit, amount: 1500, account: account)
+      insert(:credit, amount: 2000, account: account)
+
+      assert Bank.sum_account_debits(account) == Decimal.new(3500)
+    end
+
+    test "sum_account_debits/1 returns 0 if account doesn't have debits" do
+      account = insert(:debit_account)
+
+      assert Bank.sum_account_debits(account) == Decimal.new(0)
+    end
+  end
+
+  describe "users" do
+    test "user_net_worth/1 returns user's assets minus liabilities" do
+      user = insert(:user)
+      asset = insert(:debit_account, user: user)
+      liability = insert(:credit_account, type: "liability", user: user)
+
+      restaurant_expenses =
+        insert(:credit_account, name: "Restaurant", type: "liability", user: user)
+
+      insert(:debit, amount: 100_000, account: asset)
+      insert(:credit, amount: 10_000, account: liability)
+      insert(:credit, amount: 5_000, account: restaurant_expenses)
+
+      assert Bank.user_net_worth(user).balance == Decimal.new(100_000 - 10_000 - 5_000)
+    end
+
+    test "user_net_worth/1 only calculates accounts' balances from given user" do
+      user = insert(:user)
+      asset = insert(:debit_account, user: user)
+      liability = insert(:credit_account, type: "liability", user: user)
+      insert(:debit, amount: 100_000, account: asset)
+      insert(:credit, amount: 10_000, account: liability)
+
+      another_user = insert(:user)
+
+      assert Bank.user_net_worth(another_user).balance == Decimal.new(0)
     end
   end
 end

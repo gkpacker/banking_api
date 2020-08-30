@@ -6,7 +6,8 @@ defmodule BankingApi.Bank do
   import Ecto.Query, warn: false
   alias BankingApi.Repo
 
-  alias BankingApi.Bank.Account
+  alias BankingApi.Accounts.User
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   @doc """
   Returns the list of accounts.
@@ -36,6 +37,23 @@ defmodule BankingApi.Bank do
 
   """
   def get_account!(id), do: Repo.get!(Account, id)
+
+  @doc """
+  Gets an user account by name and lock it.
+
+  ## Examples
+
+      iex> get_and_lock_user_account_by_name!("Checking")
+      %Account{name: "Checking"}
+
+  """
+  def get_and_lock_user_account_by_name!(user, account_name) do
+    Account
+    |> Account.by_user(user)
+    |> Account.by_name(account_name)
+    |> Account.lock()
+    |> Repo.one()
+  end
 
   @doc """
   Creates a account.
@@ -101,8 +119,6 @@ defmodule BankingApi.Bank do
   def change_account(%Account{} = account, attrs \\ %{}) do
     Account.changeset(account, attrs)
   end
-
-  alias BankingApi.Bank.Transaction
 
   @doc """
   Returns the list of transactions.
@@ -207,8 +223,6 @@ defmodule BankingApi.Bank do
     Transaction.changeset(transaction, attrs)
   end
 
-  alias BankingApi.Bank.Posting
-
   @doc """
   Returns the list of postings.
 
@@ -242,5 +256,128 @@ defmodule BankingApi.Bank do
     Posting
     |> Repo.get!(id)
     |> Repo.preload([:account, :transaction])
+  end
+
+  @doc """
+  Sum all credit postings for given account
+
+  ## Examples
+
+      iex> sum_account_credits(account)
+      #Decimal<10000>
+
+      iex> sum_account_credits(account_without_postings)
+      #Decimal<0>
+
+  """
+  def sum_account_credits(%Account{} = account) do
+    [sum] =
+      Posting
+      |> Posting.for_account(account)
+      |> Posting.sum_credits()
+      |> Repo.all()
+
+    if sum do
+      sum
+    else
+      Decimal.new(0)
+    end
+  end
+
+  @doc """
+  Sum all debit postings for given account
+
+  ## Examples
+
+      iex> sum_account_debits(account)
+      #Decimal<10000>
+
+      iex> sum_account_debits(account_without_postings)
+      #Decimal<0>
+
+  """
+  def sum_account_debits(%Account{} = account) do
+    [sum] =
+      Posting
+      |> Posting.for_account(account)
+      |> Posting.sum_debits()
+      |> Repo.all()
+
+    if sum do
+      sum
+    else
+      Decimal.new(0)
+    end
+  end
+
+  @doc """
+  Returns user with its balance, which is calculated by
+  subtracting his Liabilities from his Assets.
+
+  [Net worth](https://en.wikipedia.org/wiki/Net_worth#Individuals)
+
+  ## Examples
+
+      iex> user_net_worth(user)
+      %User{balance: #Decimal<100_000>}
+
+  """
+  def user_net_worth(%User{} = user) do
+    user_accounts = Account.by_user(Account, user)
+    user_assets = asset_accounts(user_accounts)
+    user_liabilities = liability_accounts(user_accounts)
+
+    %User{balance: Account.balance(user_assets ++ user_liabilities)}
+  end
+
+  @doc """
+  Filters accounts with "asset" type.
+  """
+  def asset_accounts(accounts) do
+    accounts
+    |> Account.assets()
+    |> Repo.all()
+    |> Repo.preload(:postings)
+  end
+
+  @doc """
+  Filters accounts with "liability" type.
+  """
+  def liability_accounts(accounts) do
+    accounts
+    |> Account.liabilities()
+    |> Repo.all()
+    |> Repo.preload(:postings)
+  end
+
+  @doc """
+  Gives an user its initial credits (R$ 1000,00)
+
+  ## Examples
+
+      iex> give_initial_credits_to_user(user)
+      %User{balance: 100_000}
+
+  """
+  def give_initial_credits_to_user(%User{} = user) do
+    Repo.transaction(fn ->
+      checking_account = get_and_lock_user_account_by_name!(user, Account.checking_account_name())
+
+      initial_credit_account =
+        get_and_lock_user_account_by_name!(user, Account.initial_credits_account_name())
+
+      initial_credit_cents = 1000 * 100
+
+      create_transaction(%{
+        name: "Initial Credit",
+        date: Date.utc_today(),
+        postings: [
+          %{type: "credit", amount: initial_credit_cents, account_id: initial_credit_account.id},
+          %{type: "debit", amount: initial_credit_cents, account_id: checking_account.id}
+        ]
+      })
+    end)
+
+    {:ok, user_net_worth(user)}
   end
 end
