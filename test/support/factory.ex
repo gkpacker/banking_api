@@ -18,10 +18,12 @@ defmodule BankingApi.Factory do
   def credit_account_factory(attrs) do
     user = Map.get(attrs, :user, insert(:user))
     contra = Map.get(attrs, :contra, false)
+    name = Map.get(attrs, :name, "Accounts Payable")
+    type = Map.get(attrs, :type, "liability")
 
     %Account{
-      name: "Accounts Payable",
-      type: "liability",
+      name: name,
+      type: type,
       contra: contra,
       user: user
     }
@@ -30,9 +32,10 @@ defmodule BankingApi.Factory do
   def debit_account_factory(attrs) do
     user = Map.get(attrs, :user, insert(:user))
     contra = Map.get(attrs, :contra, false)
+    name = Map.get(attrs, :name, "Checking")
 
     %Account{
-      name: "Checking",
+      name: name,
       type: "asset",
       contra: contra,
       user: user

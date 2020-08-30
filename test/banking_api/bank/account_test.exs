@@ -2,6 +2,35 @@ defmodule BankingApi.Bank.AccountTest do
   use BankingApi.DataCase, async: true
   alias BankingApi.Bank.Account
 
+  describe "Account.by_name" do
+    test "returns accounts with queried name" do
+      cash_account = insert(:debit_account, name: "Cash")
+      insert(:debit_account)
+
+      assert [account_by_name] =
+               Account
+               |> Account.by_name("Cash")
+               |> Repo.all()
+
+      assert cash_account.id == account_by_name.id
+    end
+  end
+
+  describe "Account.by_user" do
+    test "returns accounts with queried user" do
+      user = insert(:user)
+      insert(:debit_account, user: user)
+      insert(:debit_account)
+
+      assert [account_by_user] =
+               Account
+               |> Account.by_user(user)
+               |> Repo.all()
+
+      assert user.id == account_by_user.user_id
+    end
+  end
+
   describe "Account.balance/1" do
     test "sub credits from debits when it's a debit account" do
       account = insert(:debit_account)

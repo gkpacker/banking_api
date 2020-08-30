@@ -34,25 +34,25 @@ defmodule BankingApi.Bank.Posting do
   """
   def for_account(query, account) do
     from p in query,
-    join: a in assoc(p, :account),
-    where: a.id == ^account.id
+      join: a in assoc(p, :account),
+      where: a.id == ^account.id
   end
 
   @doc """
-  Sum all credit posting amounts for given query
+  Sum all credit postings for given query
   """
   def sum_credits(query) do
     from p in query,
-    where: p.type == ^"credit",
-    select: sum(p.amount)
+      where: p.type == ^"credit",
+      select: sum(p.amount)
   end
 
   @doc """
-  Sum all debit posting amounts for given query
+  Sum all debit postings for given query
   """
   def sum_debits(query) do
     from p in query,
-    where: p.type == ^"debit",
-    select: sum(p.amount)
+      where: p.type == ^"debit",
+      select: sum(p.amount)
   end
 end

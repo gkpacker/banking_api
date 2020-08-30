@@ -65,7 +65,7 @@ defmodule BankingApi.Bank.PostingTest do
 
       [sum] =
         Posting
-        |> Posting.sum_credits
+        |> Posting.sum_credits()
         |> Repo.all()
 
       assert sum == Decimal.new(2000)
@@ -80,7 +80,7 @@ defmodule BankingApi.Bank.PostingTest do
 
       [sum] =
         Posting
-        |> Posting.sum_debits
+        |> Posting.sum_debits()
         |> Repo.all()
 
       assert sum == Decimal.new(1100)

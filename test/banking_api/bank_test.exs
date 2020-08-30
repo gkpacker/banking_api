@@ -1,11 +1,10 @@
 defmodule BankingApi.BankTest do
-  use BankingApi.DataCase
+  use BankingApi.DataCase, async: true
 
   alias BankingApi.Bank
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   describe "accounts" do
-    alias BankingApi.Bank.Account
-
     @valid_attrs %{contra: false, name: "Checking", type: "asset", user_id: 1}
     @update_attrs %{contra: true, name: "Drawing", type: "asset"}
     @invalid_attrs %{contra: nil, name: nil, type: nil}
@@ -92,11 +91,18 @@ defmodule BankingApi.BankTest do
       account = insert(:debit_account)
       assert %Ecto.Changeset{} = Bank.change_account(account)
     end
+
+    test "get_and_lock_user_account_by_name!/1 returns a locked account by name" do
+      user = insert(:user)
+      account = insert(:debit_account, name: "Checking", user: user)
+      insert(:debit_account, name: "Cash", user: user)
+      user_account_by_name = Bank.get_and_lock_user_account_by_name!(user, "Checking")
+
+      assert account.id == user_account_by_name.id
+    end
   end
 
   describe "transactions" do
-    alias BankingApi.Bank.{Posting, Transaction}
-
     test "list_transactions/0 returns all transactions" do
       transaction = insert(:transaction)
 
@@ -137,11 +143,29 @@ defmodule BankingApi.BankTest do
       assert debit_posting.account.id == credit_account.id
       assert credit_posting.account.id == debit_account.id
     end
+
+    test "give_initial_credits_to_user/1 gives R$ 1000,00 credits to user" do
+      user = insert(:user)
+
+      insert(
+        :credit_account,
+        type: "equity",
+        name: Account.initial_credits_account_name(),
+        user: user
+      )
+
+      insert(
+        :debit_account,
+        name: Account.checking_account_name(),
+        user: user
+      )
+
+      assert {:ok, user_with_balance} = Bank.give_initial_credits_to_user(user)
+      assert user_with_balance.balance == Decimal.new(100_000)
+    end
   end
 
   describe "postings" do
-    alias BankingApi.Bank.Posting
-
     test "list_postings/0 returns all postings" do
       posting = insert(:credit)
 
@@ -183,6 +207,35 @@ defmodule BankingApi.BankTest do
       account = insert(:debit_account)
 
       assert Bank.sum_account_debits(account) == Decimal.new(0)
+    end
+  end
+
+  describe "users" do
+    test "user_net_worth/1 returns user's assets minus liabilities" do
+      user = insert(:user)
+      asset = insert(:debit_account, user: user)
+      liability = insert(:credit_account, type: "liability", user: user)
+
+      restaurant_expenses =
+        insert(:credit_account, name: "Restaurant", type: "liability", user: user)
+
+      insert(:debit, amount: 100_000, account: asset)
+      insert(:credit, amount: 10_000, account: liability)
+      insert(:credit, amount: 5_000, account: restaurant_expenses)
+
+      assert Bank.user_net_worth(user).balance == Decimal.new(100_000 - 10_000 - 5_000)
+    end
+
+    test "user_net_worth/1 only calculates accounts' balances from given user" do
+      user = insert(:user)
+      asset = insert(:debit_account, user: user)
+      liability = insert(:credit_account, type: "liability", user: user)
+      insert(:debit, amount: 100_000, account: asset)
+      insert(:credit, amount: 10_000, account: liability)
+
+      another_user = insert(:user)
+
+      assert Bank.user_net_worth(another_user).balance == Decimal.new(0)
     end
   end
 end
