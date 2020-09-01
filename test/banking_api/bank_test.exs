@@ -2,7 +2,7 @@ defmodule BankingApi.BankTest do
   use BankingApi.DataCase, async: true
 
   alias BankingApi.Bank
-  alias BankingApi.Bank.{Account, Posting, Transaction}
+  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
 
   describe "accounts" do
     @valid_attrs %{contra: false, name: "Checking", type: "asset", user_id: 1}
@@ -236,6 +236,57 @@ defmodule BankingApi.BankTest do
       another_user = insert(:user)
 
       assert Bank.user_net_worth(another_user).balance == Decimal.new(0)
+    end
+  end
+
+  describe "withdraws" do
+    test "list_withdraws/0 returns all withdraws" do
+      withdraw = insert(:withdraw)
+      assert [first_withdraw] = Bank.list_withdraws()
+      assert first_withdraw.id == withdraw.id
+    end
+
+    test "get_withdraw!/1 returns the withdraw with given id" do
+      withdraw = insert(:withdraw)
+      assert Bank.get_withdraw!(withdraw.id).id == withdraw.id
+    end
+
+    test "create_withdraw/1 removes the drawn amount from user's balance" do
+      user = insert(:user)
+      checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
+      equity = insert(:credit_account, type: "equity", user: user)
+      insert(:debit, amount: 70_000, account: checking)
+      insert(:credit, amount: 70_000, account: equity)
+
+      insert(
+        :credit_account,
+        type: "equity",
+        contra: true,
+        name: Account.drawings_account_name(),
+        user: user
+      )
+
+      attrs = %{amount_cents: 50_000, user_id: user.id}
+
+      assert {:ok, %Withdraw{} = withdraw} = Bank.create_withdraw(attrs)
+      assert withdraw.amount_cents == Decimal.new(50_000)
+      assert withdraw.user.balance == Decimal.new(20_000)
+      assert withdraw.user.id == user.id
+      assert Bank.user_net_worth(user).balance == Decimal.new(20_000)
+    end
+
+    test "create_withdraw/1 doesn't change user balance if it wasn't created" do
+      user = insert(:user)
+      checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
+      equity = insert(:credit_account, type: "equity", user: user)
+      insert(:debit, amount: 30_000, account: checking)
+      insert(:credit, amount: 30_000, account: equity)
+
+      attrs = %{amount_cents: 50_000, user_id: user.id}
+
+      {:error, %Ecto.Changeset{} = changeset} = Bank.create_withdraw(attrs)
+      refute changeset.valid?
+      assert Bank.user_net_worth(user).balance == Decimal.new(30_000)
     end
   end
 end
