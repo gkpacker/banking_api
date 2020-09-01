@@ -22,3 +22,5 @@ config :banking_api, BankingApiWeb.Endpoint,
 config :logger, level: :warn
 
 config :bcrypt_elixir, :log_rounds, 4
+
+config :banking_api, BankingApi.Mailer, adapter: Bamboo.TestAdapter

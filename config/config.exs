@@ -30,6 +30,10 @@ config :banking_api, BankingApiWeb.Auth.Guardian,
   issuer: "banking_api",
   secret_key: "KuUT4GJrWZgsmV3YMJbZaf+dk+vGthWtAs4mnwCP7/chjtTnHlrt0UMHO8cPHLKL"
 
+config :banking_api, BankingApi.Mailer,
+  adapter: Bamboo.LocalAdapter,
+  open_email_in_browser_url: "http://localhost:4000/sent_emails"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
