@@ -5,18 +5,7 @@ defmodule BankingApi.Bank.WithdrawTest do
   describe "Withdraw.changeset/2" do
     test "it's valid when user accounts balance" do
       user = insert(:user)
-      checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
-      equity = insert(:credit_account, type: "equity", user: user)
-      insert(:debit, amount: 100_000, account: checking)
-      insert(:credit, amount: 100_000, account: equity)
-
-      insert(
-        :credit_account,
-        type: "equity",
-        contra: true,
-        name: Account.drawings_account_name(),
-        user: user
-      )
+      insert(:withdraw_account_with_user_balance, user: user)
 
       changeset = Withdraw.changeset(%Withdraw{}, %{amount_cents: 50_000, user_id: user.id})
 
@@ -25,14 +14,7 @@ defmodule BankingApi.Bank.WithdrawTest do
 
     test "it isn's valid when user doesn't have suficient cash" do
       user = insert(:user)
-      insert(:debit_account, name: Account.checking_account_name(), user: user)
-
-      insert(:credit_account,
-        type: "equity",
-        contra: true,
-        name: Account.drawings_account_name(),
-        user: user
-      )
+      insert(:withdraw_account_with_user_balance, user: user, user_balance: 30_000)
 
       changeset = Withdraw.changeset(%Withdraw{}, %{amount_cents: 50_000, user_id: user.id})
 

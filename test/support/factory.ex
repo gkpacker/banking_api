@@ -95,4 +95,21 @@ defmodule BankingApi.Factory do
       user: user
     }
   end
+
+  def withdraw_account_with_user_balance_factory(attrs) do
+    user_balance = Map.get(attrs, :user_balance, 100_000)
+    user = Map.get(attrs, :user, insert(:user))
+    checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
+    equity = insert(:credit_account, type: "equity", user: user)
+    insert(:debit, amount: user_balance, account: checking)
+    insert(:credit, amount: user_balance, account: equity)
+
+    build(
+      :credit_account,
+      type: "equity",
+      contra: true,
+      name: Account.drawings_account_name(),
+      user: user
+    )
+  end
 end

@@ -18,7 +18,7 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
       assert %{
                "email" => "user@email.com",
                "token" => token,
-               "balance" => "R$ 1000"
+               "balance" => "R$ 1000.00"
              } = json_response(conn, 201)
     end
 
@@ -49,11 +49,11 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
       assert %{
                "email" => "user@email.com",
                "token" => token,
-               "balance" => "R$ 0"
+               "balance" => "R$ 0.00"
              } = json_response(conn, 201)
     end
 
-    test "renders unauthorized when user not found", %{conn: conn, user: _user} do
+    test "renders unauthorized when user not found", %{conn: conn} do
       conn =
         post(
           conn,

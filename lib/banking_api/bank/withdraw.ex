@@ -26,7 +26,7 @@ defmodule BankingApi.Bank.Withdraw do
     withdraw
     |> cast(attrs, [:amount_cents, :user_id])
     |> validate_required([:amount_cents])
-    |> validate_number(:amount_cents, greater_than_or_equal_to: 0)
+    |> validate_number(:amount_cents, greater_than: 0)
     |> assoc_constraint(:user, required: true)
     |> validate_user_balance
     |> build_withdraw_transaction

@@ -32,6 +32,8 @@ defmodule BankingApiWeb.Router do
 
   scope "/api/v1", BankingApiWeb.Api.V1 do
     pipe_through [:api, :auth]
+
+    resources "/withdraws", WithdrawController, only: [:create]
   end
 
   # Enables LiveDashboard only for development
