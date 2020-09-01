@@ -1,0 +1,5 @@
+Hey, <%= @email %>!
+
+Your R$ <%= @amount %> withdraw request was successfully performed.
+
+Your balance is R$ <%= @balance %>

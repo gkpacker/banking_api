@@ -1,5 +1,7 @@
 defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
   use BankingApiWeb.ConnCase
+  use Bamboo.Test
+  alias BankingApi.Email
   alias BankingApiWeb.Auth.Guardian
 
   @create_attrs %{amount_cents: 20_000}
@@ -13,9 +15,8 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
     test "returns unauthenticated when not logged in", %{conn: conn} do
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: @create_attrs)
 
-      assert %{
-               "error" => "unauthenticated"
-             } == json_response(conn, 401)
+      assert_no_emails_delivered()
+      assert %{"error" => "unauthenticated"} == json_response(conn, 401)
     end
   end
 
@@ -35,8 +36,16 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
     test "it removes the amount from user's account", %{conn: conn, user: user} do
       insert(:withdraw_account_with_user_balance, user: user)
-
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: @create_attrs)
+
+      expected_email =
+        Email.user_withdraw_html_email(
+          user.email,
+          Decimal.new(80_000),
+          @create_attrs.amount_cents
+        )
+
+      assert_delivered_email(expected_email)
 
       assert %{
                "email" => "user@email.com",
@@ -46,6 +55,8 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
     test "renders errors when user doesn't have suficient money", %{conn: conn} do
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: %{amount_cents: 10_000})
+
+      assert_no_emails_delivered()
 
       assert %{
                "errors" => %{
@@ -57,6 +68,8 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
     test "renders errors when doesn't provide the withdraw amount", %{conn: conn} do
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: @invalid_attrs)
 
+      assert_no_emails_delivered()
+
       assert %{
                "errors" => %{
                  "amount_cents" => ["can't be blank"]
@@ -66,6 +79,8 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
     test "renders errors when the provided withdraw amount is 0", %{conn: conn} do
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: %{amount_cents: 0})
+
+      assert_no_emails_delivered()
 
       assert %{
                "errors" => %{

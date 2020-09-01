@@ -1,0 +1,4 @@
+<p>Hey, <%= @email %>!<p>
+<p>Your R$ <%= @amount %> withdraw request was successfully performed.<p>
+</br>
+<p>Your balance is R$ <%= @balance %></p>

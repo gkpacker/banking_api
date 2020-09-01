@@ -41,7 +41,7 @@ defmodule BankingApi.Bank.Withdraw do
        ) do
     %User{balance: balance} =
       Accounts.get_user!(user_id)
-      |> Bank.user_net_worth()
+      |> Bank.calculate_user_balance()
 
     next_balance = Decimal.sub(balance, Decimal.new(amount_cents))
 

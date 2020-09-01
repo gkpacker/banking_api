@@ -318,11 +318,11 @@ defmodule BankingApi.Bank do
 
   ## Examples
 
-      iex> user_net_worth(user)
+      iex> calculate_user_balance(user)
       %User{balance: #Decimal<100_000>}
 
   """
-  def user_net_worth(%User{} = user) do
+  def calculate_user_balance(%User{} = user) do
     user_accounts = Account.by_user(Account, user)
     user_assets = asset_accounts(user_accounts)
     user_liabilities = liability_accounts(user_accounts)
@@ -366,7 +366,7 @@ defmodule BankingApi.Bank do
       initial_credit_account =
         get_and_lock_user_account_by_name!(user, Account.initial_credits_account_name())
 
-      initial_credit_cents = 1000 * 100
+      initial_credit_cents = amount_to_cents(1000)
 
       create_transaction(%{
         name: "Initial Credit",
@@ -378,7 +378,7 @@ defmodule BankingApi.Bank do
       })
     end)
 
-    {:ok, user_net_worth(user)}
+    {:ok, calculate_user_balance(user)}
   end
 
   @doc """
@@ -434,10 +434,18 @@ defmodule BankingApi.Bank do
       {:ok, withdraw} ->
         withdraw = Repo.preload(withdraw, :user)
 
-        {:ok, %Withdraw{withdraw | user: user_net_worth(withdraw.user)}}
+        {:ok, %Withdraw{withdraw | user: calculate_user_balance(withdraw.user)}}
 
       changeset ->
         changeset
     end
   end
+
+  def amount_from_cents(amount_cents) do
+    amount_cents
+    |> Decimal.div(100)
+    |> Decimal.round(2)
+  end
+
+  def amount_to_cents(amount), do: Decimal.new(amount * 100)
 end

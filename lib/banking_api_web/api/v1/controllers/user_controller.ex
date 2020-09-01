@@ -11,7 +11,7 @@ defmodule BankingApiWeb.Api.V1.UserController do
 
   def signin(conn, %{"email" => email, "password" => password}) do
     with {:ok, user, token} <- Guardian.authenticate(email, password),
-         user <- Bank.user_net_worth(user) do
+         user <- Bank.calculate_user_balance(user) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/json")

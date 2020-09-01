@@ -1,11 +1,9 @@
 defmodule BankingApiWeb.Api.V1.UserView do
   use BankingApiWeb, :view
+  alias BankingApi.Bank
 
   def render("user.json", %{user: user, token: token}) do
-    formatted_balance =
-      user.balance
-      |> Decimal.div(100)
-      |> Decimal.round(2)
+    formatted_balance = Bank.amount_from_cents(user.balance)
 
     %{
       email: user.email,
@@ -15,10 +13,7 @@ defmodule BankingApiWeb.Api.V1.UserView do
   end
 
   def render("user.json", %{user: user}) do
-    formatted_balance =
-      user.balance
-      |> Decimal.div(100)
-      |> Decimal.round(2)
+    formatted_balance = Bank.amount_from_cents(user.balance)
 
     %{
       email: user.email,
