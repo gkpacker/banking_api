@@ -10,7 +10,8 @@ defmodule BankingApiWeb.Api.V1.UserController do
   action_fallback BankingApiWeb.Api.V1.FallbackController
 
   def signin(conn, %{"email" => email, "password" => password}) do
-    with {:ok, user, token} <- Guardian.authenticate(email, password) do
+    with {:ok, user, token} <- Guardian.authenticate(email, password),
+         user <- Bank.user_net_worth(user) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/json")
@@ -30,13 +31,12 @@ defmodule BankingApiWeb.Api.V1.UserController do
     user_params = Map.put(user_params, "accounts", initial_accounts)
 
     with {:ok, %User{} = user} <- Accounts.create_user(user_params),
-         {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
-      Bank.give_initial_credits_to_user(user)
-
+         {:ok, token, _claims} <- Guardian.encode_and_sign(user),
+         {:ok, user_with_balance} <- Bank.give_initial_credits_to_user(user) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/json")
-      |> render("user.json", %{user: user, token: token})
+      |> render("user.json", %{user: user_with_balance, token: token})
     end
   end
 end
