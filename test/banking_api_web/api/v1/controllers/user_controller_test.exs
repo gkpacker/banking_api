@@ -1,50 +1,25 @@
 defmodule BankingApiWeb.Api.V1.UserControllerTest do
   use BankingApiWeb.ConnCase
 
-  alias BankingApi.Accounts
-  alias BankingApi.Accounts.User
-  alias BankingApi.Bank
-
   @create_attrs %{
     email: "user@email.com",
     password: "password"
   }
   @invalid_attrs %{email: nil, password: nil}
 
-  def fixture(:user) do
-    {:ok, user} = Accounts.create_user(@create_attrs)
-    user
-  end
-
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
 
   describe "create user" do
-    test "renders user when data is valid", %{conn: conn} do
+    test "creates an user with R$ 1000 credits when data is valid", %{conn: conn} do
       conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
 
       assert %{
                "email" => "user@email.com",
-               "token" => token
+               "token" => token,
+               "balance" => "R$ 1000.00"
              } = json_response(conn, 201)
-    end
-
-    test "creates user with its initial accounts and credits", %{conn: conn} do
-      conn = post(conn, Routes.user_path(conn, :create), user: @create_attrs)
-
-      assert %{"email" => email} = json_response(conn, 201)
-      assert {:ok, user} = Accounts.get_by_email(email)
-
-      assert [
-               %{name: "Accounts Receivable", type: "equity"},
-               %{name: "Initial Credits", type: "equity"},
-               %{name: "Checking", type: "asset"},
-               %{name: "Accounts Payable", type: "liability"},
-               %{name: "Drawings", type: "equity", contra: true}
-             ] = user.accounts
-
-      assert %User{balance: Decimal.new(100_000)} == Bank.user_net_worth(user)
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -73,11 +48,12 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
 
       assert %{
                "email" => "user@email.com",
-               "token" => token
+               "token" => token,
+               "balance" => "R$ 0.00"
              } = json_response(conn, 201)
     end
 
-    test "renders unauthorized when user not found", %{conn: conn, user: _user} do
+    test "renders unauthorized when user not found", %{conn: conn} do
       conn =
         post(
           conn,
@@ -107,7 +83,8 @@ defmodule BankingApiWeb.Api.V1.UserControllerTest do
   end
 
   defp create_user(_) do
-    user = fixture(:user)
+    user = insert(:user, @create_attrs)
+
     %{user: user}
   end
 end

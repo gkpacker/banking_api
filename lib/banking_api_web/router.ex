@@ -32,6 +32,8 @@ defmodule BankingApiWeb.Router do
 
   scope "/api/v1", BankingApiWeb.Api.V1 do
     pipe_through [:api, :auth]
+
+    resources "/withdraws", WithdrawController, only: [:create]
   end
 
   # Enables LiveDashboard only for development
@@ -43,6 +45,8 @@ defmodule BankingApiWeb.Router do
   # as long as you are also using SSL (which you should anyway).
   if Mix.env() in [:dev, :test] do
     import Phoenix.LiveDashboard.Router
+
+    forward "/sent_emails", Bamboo.SentEmailViewerPlug
 
     scope "/" do
       pipe_through :browser

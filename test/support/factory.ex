@@ -4,14 +4,16 @@ defmodule BankingApi.Factory do
   use ExMachina.Ecto, repo: BankingApi.Repo
 
   alias BankingApi.Accounts.User
-  alias BankingApi.Bank.{Account, Posting, Transaction}
+  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
 
-  def user_factory do
-    email = sequence(:email, &"user#{&1}@email.com")
+  def user_factory(attrs) do
+    default_email = sequence(:email, &"user#{&1}@email.com")
+    email = Map.get(attrs, :email, default_email)
+    password = Map.get(attrs, :password, "password")
 
     %User{
       email: email,
-      password: "123123"
+      encrypted_password: Bcrypt.hash_pwd_salt(password)
     }
   end
 
@@ -73,5 +75,41 @@ defmodule BankingApi.Factory do
       account: account,
       transaction: transaction
     }
+  end
+
+  def withdraw_factory(attrs) do
+    user = Map.get(attrs, :user, insert(:user))
+    amount_cents = Map.get(attrs, :amount_cents, 50_000)
+    insert(:debit_account, name: Account.checking_account_name(), user: user)
+
+    insert(
+      :credit_account,
+      type: "equity",
+      contra: true,
+      name: Account.drawings_account_name(),
+      user: user
+    )
+
+    %Withdraw{
+      amount_cents: amount_cents,
+      user: user
+    }
+  end
+
+  def withdraw_account_with_user_balance_factory(attrs) do
+    user_balance = Map.get(attrs, :user_balance, 100_000)
+    user = Map.get(attrs, :user, insert(:user))
+    checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
+    equity = insert(:credit_account, type: "equity", user: user)
+    insert(:debit, amount: user_balance, account: checking)
+    insert(:credit, amount: user_balance, account: equity)
+
+    build(
+      :credit_account,
+      type: "equity",
+      contra: true,
+      name: Account.drawings_account_name(),
+      user: user
+    )
   end
 end

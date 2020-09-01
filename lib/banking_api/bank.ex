@@ -7,7 +7,7 @@ defmodule BankingApi.Bank do
   alias BankingApi.Repo
 
   alias BankingApi.Accounts.User
-  alias BankingApi.Bank.{Account, Posting, Transaction}
+  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
 
   @doc """
   Returns the list of accounts.
@@ -318,16 +318,16 @@ defmodule BankingApi.Bank do
 
   ## Examples
 
-      iex> user_net_worth(user)
+      iex> calculate_user_balance(user)
       %User{balance: #Decimal<100_000>}
 
   """
-  def user_net_worth(%User{} = user) do
+  def calculate_user_balance(%User{} = user) do
     user_accounts = Account.by_user(Account, user)
     user_assets = asset_accounts(user_accounts)
     user_liabilities = liability_accounts(user_accounts)
 
-    %User{balance: Account.balance(user_assets ++ user_liabilities)}
+    %User{user | balance: Account.balance(user_assets ++ user_liabilities)}
   end
 
   @doc """
@@ -366,7 +366,7 @@ defmodule BankingApi.Bank do
       initial_credit_account =
         get_and_lock_user_account_by_name!(user, Account.initial_credits_account_name())
 
-      initial_credit_cents = 1000 * 100
+      initial_credit_cents = amount_to_cents(1000)
 
       create_transaction(%{
         name: "Initial Credit",
@@ -378,6 +378,74 @@ defmodule BankingApi.Bank do
       })
     end)
 
-    {:ok, user_net_worth(user)}
+    {:ok, calculate_user_balance(user)}
   end
+
+  @doc """
+  Returns the list of withdraws.
+
+  ## Examples
+
+      iex> list_withdraws()
+      [%Withdraw{}, ...]
+
+  """
+  def list_withdraws do
+    Repo.all(Withdraw)
+  end
+
+  @doc """
+  Gets a single withdraw.
+
+  Raises `Ecto.NoResultsError` if the Withdraw does not exist.
+
+  ## Examples
+
+      iex> get_withdraw!(123)
+      %Withdraw{}
+
+      iex> get_withdraw!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_withdraw!(id), do: Repo.get!(Withdraw, id)
+
+  @doc """
+  Creates a withdraw.
+
+  Returns the user that requested the withdraw with its current balance.
+
+  ## Examples
+
+      iex> create_withdraw(%{field: value})
+      {:ok, %Withdraw{user: %User{balance: #Decimal<100_000>}}}
+
+      iex> create_withdraw(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_withdraw(attrs \\ %{}) do
+    changeset =
+      %Withdraw{}
+      |> Withdraw.changeset(attrs)
+      |> Repo.insert()
+
+    case changeset do
+      {:ok, withdraw} ->
+        withdraw = Repo.preload(withdraw, :user)
+
+        {:ok, %Withdraw{withdraw | user: calculate_user_balance(withdraw.user)}}
+
+      changeset ->
+        changeset
+    end
+  end
+
+  def amount_from_cents(amount_cents) do
+    amount_cents
+    |> Decimal.div(100)
+    |> Decimal.round(2)
+  end
+
+  def amount_to_cents(amount), do: Decimal.new(amount * 100)
 end
