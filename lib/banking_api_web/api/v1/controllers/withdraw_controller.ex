@@ -1,7 +1,7 @@
 defmodule BankingApiWeb.Api.V1.WithdrawController do
   use BankingApiWeb, :controller
   alias BankingApi.{Bank, Email, Mailer}
-  alias BankingApi.Bank.Withdraw
+  alias BankingApi.Bank.Transaction
   alias BankingApiWeb.Api.V1.UserView
   import Guardian.Plug
 
@@ -9,14 +9,14 @@ defmodule BankingApiWeb.Api.V1.WithdrawController do
 
   def create(conn, %{"withdraw" => withdraw_params}) do
     user = current_resource(conn)
-    withdraw_params = Map.put(withdraw_params, "user_id", user.id)
 
-    with {:ok, %Withdraw{user: user} = withdraw} <- Bank.create_withdraw(withdraw_params) do
+    with {:ok, %Transaction{from_user: user} = transaction} <-
+           Bank.create_withdraw(user, withdraw_params) do
       withdraw_email =
         Email.user_withdraw_html_email(
           user.email,
           user.balance,
-          withdraw.amount_cents
+          transaction.amount_cents
         )
 
       Mailer.deliver_later(withdraw_email)
