@@ -4,7 +4,7 @@ defmodule BankingApiWeb.Api.V1.UserController do
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank
-  alias BankingApi.Bank.Account
+  alias BankingApi.Bank.{Account, Transaction}
   alias BankingApiWeb.Auth.Guardian
 
   action_fallback BankingApiWeb.Api.V1.FallbackController
@@ -32,11 +32,11 @@ defmodule BankingApiWeb.Api.V1.UserController do
 
     with {:ok, %User{} = user} <- Accounts.create_user(user_params),
          {:ok, token, _claims} <- Guardian.encode_and_sign(user),
-         {:ok, user_with_balance} <- Bank.give_initial_credits_to_user(user) do
+         {:ok, %Transaction{from_user: user}} <- Bank.give_initial_credits_to_user(user) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/json")
-      |> render("user.json", %{user: user_with_balance, token: token})
+      |> render("user.json", %{user: user, token: token})
     end
   end
 end

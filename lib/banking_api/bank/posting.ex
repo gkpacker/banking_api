@@ -24,7 +24,7 @@ defmodule BankingApi.Bank.Posting do
     |> cast(attrs, [:type, :amount, :account_id, :transaction_id])
     |> validate_required([:type, :amount])
     |> validate_inclusion(:type, ["credit", "debit"])
-    |> validate_number(:amount, greater_than_or_equal_to: 0)
+    |> validate_number(:amount, greater_than: 0)
     |> assoc_constraint(:account)
     |> assoc_constraint(:transaction)
   end

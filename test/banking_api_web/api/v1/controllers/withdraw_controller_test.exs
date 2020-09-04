@@ -5,7 +5,7 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
   alias BankingApiWeb.Auth.Guardian
 
   @create_attrs %{amount_cents: 20_000}
-  @invalid_attrs %{amount_cents: nil}
+  @invalid_attrs %{amount_cents: 0}
 
   describe "requires authentication" do
     setup %{conn: conn} do
@@ -35,7 +35,7 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
     end
 
     test "it removes the amount from user's account", %{conn: conn, user: user} do
-      insert(:withdraw_account_with_user_balance, user: user)
+      insert(:initial_accounts, user: user)
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: @create_attrs)
 
       expected_email =
@@ -60,7 +60,7 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
       assert %{
                "errors" => %{
-                 "user" => ["doesn't have suficient money"]
+                 "from_user" => ["doesn't have suficient money"]
                }
              } == json_response(conn, 422)
     end
@@ -72,7 +72,11 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
       assert %{
                "errors" => %{
-                 "amount_cents" => ["can't be blank"]
+                 "amount_cents" => ["must be greater than 0"],
+                 "postings" => [
+                   %{"amount" => ["must be greater than 0"]},
+                   %{"amount" => ["must be greater than 0"]}
+                 ]
                }
              } == json_response(conn, 422)
     end
@@ -84,7 +88,11 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
 
       assert %{
                "errors" => %{
-                 "amount_cents" => ["must be greater than 0"]
+                 "amount_cents" => ["must be greater than 0"],
+                 "postings" => [
+                   %{"amount" => ["must be greater than 0"]},
+                   %{"amount" => ["must be greater than 0"]}
+                 ]
                }
              } == json_response(conn, 422)
     end

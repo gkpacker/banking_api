@@ -4,7 +4,7 @@ defmodule BankingApi.Factory do
   use ExMachina.Ecto, repo: BankingApi.Repo
 
   alias BankingApi.Accounts.User
-  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   def user_factory(attrs) do
     default_email = sequence(:email, &"user#{&1}@email.com")
@@ -27,7 +27,7 @@ defmodule BankingApi.Factory do
       name: name,
       type: type,
       contra: contra,
-      user: user
+      user_id: user.id
     }
   end
 
@@ -40,14 +40,16 @@ defmodule BankingApi.Factory do
       name: name,
       type: "asset",
       contra: contra,
-      user: user
+      user_id: user.id
     }
   end
 
   def transaction_factory do
     %Transaction{
       name: "Dinner",
-      date: ~D[2000-03-10]
+      date: ~D[2000-03-10],
+      amount_cents: 1000,
+      type: "withdraw"
     }
   end
 
@@ -59,8 +61,8 @@ defmodule BankingApi.Factory do
     %Posting{
       amount: amount,
       type: "debit",
-      account: account,
-      transaction: transaction
+      account_id: account.id,
+      transaction_id: transaction.id
     }
   end
 
@@ -72,35 +74,23 @@ defmodule BankingApi.Factory do
     %Posting{
       amount: amount,
       type: "credit",
-      account: account,
-      transaction: transaction
+      account_id: account.id,
+      transaction_id: transaction.id
     }
   end
 
-  def withdraw_factory(attrs) do
-    user = Map.get(attrs, :user, insert(:user))
-    amount_cents = Map.get(attrs, :amount_cents, 50_000)
-    insert(:debit_account, name: Account.checking_account_name(), user: user)
-
-    insert(
-      :credit_account,
-      type: "equity",
-      contra: true,
-      name: Account.drawings_account_name(),
-      user: user
-    )
-
-    %Withdraw{
-      amount_cents: amount_cents,
-      user: user
-    }
-  end
-
-  def withdraw_account_with_user_balance_factory(attrs) do
+  def initial_accounts_factory(attrs) do
     user_balance = Map.get(attrs, :user_balance, 100_000)
     user = Map.get(attrs, :user, insert(:user))
     checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
-    equity = insert(:credit_account, type: "equity", user: user)
+
+    equity =
+      insert(:credit_account,
+        name: Account.initial_credits_account_name(),
+        type: "equity",
+        user: user
+      )
+
     insert(:debit, amount: user_balance, account: checking)
     insert(:credit, amount: user_balance, account: equity)
 

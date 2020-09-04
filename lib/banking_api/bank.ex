@@ -6,21 +6,9 @@ defmodule BankingApi.Bank do
   import Ecto.Query, warn: false
   alias BankingApi.Repo
 
+  alias BankingApi.Accounts
   alias BankingApi.Accounts.User
-  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
-
-  @doc """
-  Returns the list of accounts.
-
-  ## Examples
-
-      iex> list_accounts()
-      [%Account{}, ...]
-
-  """
-  def list_accounts do
-    Repo.all(Account)
-  end
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   @doc """
   Gets a single account.
@@ -43,16 +31,26 @@ defmodule BankingApi.Bank do
 
   ## Examples
 
-      iex> get_and_lock_user_account_by_name!("Checking")
+      iex> get_and_lock_account("Checking")
       %Account{name: "Checking"}
 
   """
-  def get_and_lock_user_account_by_name!(user, account_name) do
-    Account
-    |> Account.by_user(user)
-    |> Account.by_name(account_name)
-    |> Account.lock()
-    |> Repo.one()
+  def get_and_lock_account(attrs \\ %{}) do
+    case get_or_create_account(attrs) do
+      {:ok, account} -> Account.lock(account)
+      error -> error
+    end
+  end
+
+  def get_or_create_account(attrs \\ %{}) do
+    case Repo.get_by(Account, attrs) do
+      nil ->
+        {:ok, account} = create_account(attrs)
+        account
+
+      account ->
+        account
+    end
   end
 
   @doc """
@@ -74,53 +72,6 @@ defmodule BankingApi.Bank do
   end
 
   @doc """
-  Updates a account.
-
-  ## Examples
-
-      iex> update_account(account, %{field: new_value})
-      {:ok, %Account{}}
-
-      iex> update_account(account, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_account(%Account{} = account, attrs) do
-    account
-    |> Account.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a account.
-
-  ## Examples
-
-      iex> delete_account(account)
-      {:ok, %Account{}}
-
-      iex> delete_account(account)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_account(%Account{} = account) do
-    Repo.delete(account)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking account changes.
-
-  ## Examples
-
-      iex> change_account(account)
-      %Ecto.Changeset{data: %Account{}}
-
-  """
-  def change_account(%Account{} = account, attrs \\ %{}) do
-    Account.changeset(account, attrs)
-  end
-
-  @doc """
   Returns the list of transactions.
 
   ## Examples
@@ -132,22 +83,6 @@ defmodule BankingApi.Bank do
   def list_transactions do
     Repo.all(Transaction)
   end
-
-  @doc """
-  Gets a single transaction.
-
-  Raises `Ecto.NoResultsError` if the Transaction does not exist.
-
-  ## Examples
-
-      iex> get_transaction!(123)
-      %Transaction{}
-
-      iex> get_transaction!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_transaction!(id), do: Repo.get!(Transaction, id)
 
   @doc """
   Creates a transaction.
@@ -174,88 +109,6 @@ defmodule BankingApi.Bank do
       changeset ->
         changeset
     end
-  end
-
-  @doc """
-  Updates a transaction.
-
-  ## Examples
-
-      iex> update_transaction(transaction, %{field: new_value})
-      {:ok, %Transaction{}}
-
-      iex> update_transaction(transaction, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_transaction(%Transaction{} = transaction, attrs) do
-    transaction
-    |> Transaction.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a transaction.
-
-  ## Examples
-
-      iex> delete_transaction(transaction)
-      {:ok, %Transaction{}}
-
-      iex> delete_transaction(transaction)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_transaction(%Transaction{} = transaction) do
-    Repo.delete(transaction)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking transaction changes.
-
-  ## Examples
-
-      iex> change_transaction(transaction)
-      %Ecto.Changeset{data: %Transaction{}}
-
-  """
-  def change_transaction(%Transaction{} = transaction, attrs \\ %{}) do
-    Transaction.changeset(transaction, attrs)
-  end
-
-  @doc """
-  Returns the list of postings.
-
-  ## Examples
-
-      iex> list_postings()
-      [%Posting{}, ...]
-
-  """
-  def list_postings do
-    Posting
-    |> Repo.all()
-    |> Repo.preload([:account, :transaction])
-  end
-
-  @doc """
-  Gets a single posting.
-
-  Raises `Ecto.NoResultsError` if the Posting does not exist.
-
-  ## Examples
-
-      iex> get_posting!(123)
-      %Posting{}
-
-      iex> get_posting!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_posting!(id) do
-    Posting
-    |> Repo.get!(id)
-    |> Repo.preload([:account, :transaction])
   end
 
   @doc """
@@ -360,92 +213,182 @@ defmodule BankingApi.Bank do
 
   """
   def give_initial_credits_to_user(%User{} = user) do
-    Repo.transaction(fn ->
-      checking_account = get_and_lock_user_account_by_name!(user, Account.checking_account_name())
+    {:ok, transaction_changeset} =
+      Repo.transaction(fn ->
+        checking_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
 
-      initial_credit_account =
-        get_and_lock_user_account_by_name!(user, Account.initial_credits_account_name())
+        initial_credit_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.initial_credits_account_name(),
+            type: "equity"
+          })
 
-      initial_credit_cents = amount_to_cents(1000)
+        initial_credit_cents = amount_to_cents(1000)
 
-      create_transaction(%{
-        name: "Initial Credit",
-        date: Date.utc_today(),
-        postings: [
-          %{type: "credit", amount: initial_credit_cents, account_id: initial_credit_account.id},
-          %{type: "debit", amount: initial_credit_cents, account_id: checking_account.id}
-        ]
-      })
-    end)
+        create_transaction(%{
+          name: "Initial Credit",
+          date: Date.utc_today(),
+          amount_cents: initial_credit_cents,
+          from_user_id: user.id,
+          type: "deposit",
+          postings: [
+            %{
+              type: "credit",
+              amount: initial_credit_cents,
+              account_id: initial_credit_account.id
+            },
+            %{type: "debit", amount: initial_credit_cents, account_id: checking_account.id}
+          ]
+        })
+      end)
 
-    {:ok, calculate_user_balance(user)}
-  end
+    case transaction_changeset do
+      {:ok, transaction} ->
+        transaction = Repo.preload(transaction, :from_user)
 
-  @doc """
-  Returns the list of withdraws.
-
-  ## Examples
-
-      iex> list_withdraws()
-      [%Withdraw{}, ...]
-
-  """
-  def list_withdraws do
-    Repo.all(Withdraw)
-  end
-
-  @doc """
-  Gets a single withdraw.
-
-  Raises `Ecto.NoResultsError` if the Withdraw does not exist.
-
-  ## Examples
-
-      iex> get_withdraw!(123)
-      %Withdraw{}
-
-      iex> get_withdraw!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_withdraw!(id), do: Repo.get!(Withdraw, id)
-
-  @doc """
-  Creates a withdraw.
-
-  Returns the user that requested the withdraw with its current balance.
-
-  ## Examples
-
-      iex> create_withdraw(%{field: value})
-      {:ok, %Withdraw{user: %User{balance: #Decimal<100_000>}}}
-
-      iex> create_withdraw(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_withdraw(attrs \\ %{}) do
-    changeset =
-      %Withdraw{}
-      |> Withdraw.changeset(attrs)
-      |> Repo.insert()
-
-    case changeset do
-      {:ok, withdraw} ->
-        withdraw = Repo.preload(withdraw, :user)
-
-        {:ok, %Withdraw{withdraw | user: calculate_user_balance(withdraw.user)}}
+        {:ok,
+         %Transaction{transaction | from_user: calculate_user_balance(transaction.from_user)}}
 
       changeset ->
         changeset
     end
   end
 
+  @doc """
+  Creates a withdraw.
+
+  Returns the user with its current balance.
+
+  ## Examples
+
+      iex> create_withdraw(%{field: value})
+      {:ok, %Transaction{user: %User{balance: #Decimal<100_000>}}}
+
+      iex> create_withdraw(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_withdraw(%User{} = user, attrs \\ %{}) do
+    amount_cents = Map.get(attrs, "amount_cents")
+
+    {:ok, transaction_changeset} =
+      Repo.transaction(fn ->
+        checking_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
+
+        drawings_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.drawings_account_name(),
+            type: "equity",
+            contra: true
+          })
+
+        create_transaction(%{
+          name: "Withdraw",
+          date: Date.utc_today(),
+          amount_cents: amount_cents,
+          from_user_id: user.id,
+          type: "withdraw",
+          postings: [
+            %{type: "credit", amount: amount_cents, account_id: checking_account.id},
+            %{type: "debit", amount: amount_cents, account_id: drawings_account.id}
+          ]
+        })
+      end)
+
+    case transaction_changeset do
+      {:ok, transaction} ->
+        transaction = Repo.preload(transaction, :from_user)
+
+        {:ok,
+         %Transaction{transaction | from_user: calculate_user_balance(transaction.from_user)}}
+
+      changeset ->
+        changeset
+    end
+  end
+
+  def create_transfer(%User{} = user, attrs \\ %{}) do
+    amount_cents = Map.get(attrs, "amount_cents")
+    to_user_email = Map.get(attrs, "to")
+
+    {:ok, ecto_transaction} =
+      Repo.transaction(fn ->
+        to_user = Accounts.get_user_by_email!(to_user_email)
+
+        from_user_checking_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
+
+        to_user_checking_account =
+          get_and_lock_account(%{
+            user_id: to_user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
+
+        create_transaction(%{
+          name: "Transfer",
+          date: Date.utc_today(),
+          amount_cents: amount_cents,
+          from_user_id: user.id,
+          to_user_id: to_user.id,
+          type: "transfer",
+          postings: [
+            %{type: "credit", account_id: from_user_checking_account.id, amount: amount_cents},
+            %{type: "debit", account_id: to_user_checking_account.id, amount: amount_cents}
+          ]
+        })
+      end)
+
+    case ecto_transaction do
+      {:ok, transaction} ->
+        transaction = Repo.preload(transaction, :from_user)
+
+        {:ok, %Transaction{transaction | from_user: calculate_user_balance(user)}}
+
+      changeset ->
+        changeset
+    end
+  end
+
+  @doc """
+  Returns an amount from cents with 2 digits precision
+
+  ## Example
+
+      iex> amount_from_cents(100_000)
+      #Decimal<1000.00>
+
+  """
   def amount_from_cents(amount_cents) do
     amount_cents
     |> Decimal.div(100)
     |> Decimal.round(2)
   end
 
+  @doc """
+  Returns an amount in cents
+
+  ## Example
+
+      iex> amount_to_cents(1000)
+      #Decimal<100_000>
+
+  """
   def amount_to_cents(amount), do: Decimal.new(amount * 100)
 end

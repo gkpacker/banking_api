@@ -11,7 +11,7 @@ defmodule BankingApi.Bank.PostingTest do
     test "amount must be greater than or equal to 0" do
       changeset = Posting.changeset(%Posting{}, @invalid_amount)
 
-      assert "must be greater than or equal to 0" in errors_on(changeset).amount
+      assert "must be greater than 0" in errors_on(changeset).amount
     end
 
     test "types that aren't either 'credit' nor 'debit' are invalid" do

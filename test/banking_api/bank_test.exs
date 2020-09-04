@@ -2,11 +2,10 @@ defmodule BankingApi.BankTest do
   use BankingApi.DataCase, async: true
 
   alias BankingApi.Bank
-  alias BankingApi.Bank.{Account, Posting, Transaction, Withdraw}
+  alias BankingApi.Bank.{Account, Posting, Transaction}
 
   describe "accounts" do
     @valid_attrs %{contra: false, name: "Checking", type: "asset", user_id: 1}
-    @update_attrs %{contra: true, name: "Drawing", type: "asset"}
     @invalid_attrs %{contra: nil, name: nil, type: nil}
     @invalid_type_attrs %{contra: false, name: "Checking", type: "invalid"}
 
@@ -14,13 +13,6 @@ defmodule BankingApi.BankTest do
       user = insert(:user)
 
       {:ok, user: user, valid_attrs: %{@valid_attrs | user_id: user.id}}
-    end
-
-    test "list_accounts/0 returns all accounts" do
-      account = insert(:debit_account)
-
-      assert [first_account] = Bank.list_accounts()
-      assert first_account.id == account.id
     end
 
     test "get_account!/1 returns the account with given id" do
@@ -59,70 +51,30 @@ defmodule BankingApi.BankTest do
       assert {:error, %Ecto.Changeset{}} = Bank.create_account(@invalid_type_attrs)
     end
 
-    test "update_account/2 with valid data updates the account" do
-      account = insert(:debit_account)
-      assert {:ok, %Account{} = account} = Bank.update_account(account, @update_attrs)
-      assert account.contra == true
-      assert account.name == "Drawing"
-      assert account.type == "asset"
-    end
-
-    test "update_account/2 with invalid data returns error changeset" do
-      account = insert(:debit_account)
-
-      assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_attrs)
-      assert account.id == Bank.get_account!(account.id).id
-    end
-
-    test "update_account/2 with invalid type returns error changeset" do
-      account = insert(:debit_account)
-
-      assert {:error, %Ecto.Changeset{}} = Bank.update_account(account, @invalid_type_attrs)
-      assert account.id == Bank.get_account!(account.id).id
-    end
-
-    test "delete_account/1 deletes the account" do
-      account = insert(:debit_account)
-      assert {:ok, %Account{}} = Bank.delete_account(account)
-      assert_raise Ecto.NoResultsError, fn -> Bank.get_account!(account.id) end
-    end
-
-    test "change_account/1 returns a account changeset" do
-      account = insert(:debit_account)
-      assert %Ecto.Changeset{} = Bank.change_account(account)
-    end
-
-    test "get_and_lock_user_account_by_name!/1 returns a locked account by name" do
+    test "get_and_lock_account/2 returns a locked account by name" do
       user = insert(:user)
       account = insert(:debit_account, name: "Checking", user: user)
       insert(:debit_account, name: "Cash", user: user)
-      user_account_by_name = Bank.get_and_lock_user_account_by_name!(user, "Checking")
+      user_account_by_name = Bank.get_and_lock_account(%{user_id: user.id, name: "Checking"})
 
       assert account.id == user_account_by_name.id
     end
   end
 
   describe "transactions" do
-    test "list_transactions/0 returns all transactions" do
-      transaction = insert(:transaction)
-
-      assert Bank.list_transactions() == [transaction]
-    end
-
-    test "get_transaction!/1 returns the transaction with given id" do
-      transaction = insert(:transaction)
-
-      assert Bank.get_transaction!(transaction.id) == transaction
-    end
-
     test "create_transaction/1 creates associated posts" do
-      credit_account = insert(:credit_account)
-      debit_account = insert(:debit_account)
+      user = insert(:user)
+      insert(:initial_accounts, user: user)
+      credit_account = insert(:credit_account, user: user)
+      debit_account = insert(:debit_account, user: user)
       date = Date.utc_today()
 
       params = %{
         name: "Dinner",
         date: date,
+        from_user_id: user.id,
+        type: "transfer",
+        amount_cents: 1000,
         postings: [
           %{type: "debit", amount: 1000, account_id: credit_account.id},
           %{type: "credit", amount: 1000, account_id: debit_account.id}
@@ -160,25 +112,12 @@ defmodule BankingApi.BankTest do
         user: user
       )
 
-      assert {:ok, user_with_balance} = Bank.give_initial_credits_to_user(user)
-      assert user_with_balance.balance == Decimal.new(100_000)
+      assert {:ok, %Transaction{from_user: user}} = Bank.give_initial_credits_to_user(user)
+      assert user.balance == Decimal.new(100_000)
     end
   end
 
   describe "postings" do
-    test "list_postings/0 returns all postings" do
-      posting = insert(:credit)
-
-      assert [first_posting] = Bank.list_postings()
-      assert first_posting.id == posting.id
-    end
-
-    test "get_posting!/1 returns the posting with given id" do
-      posting = insert(:debit)
-
-      assert Bank.get_posting!(posting.id).id == posting.id
-    end
-
     test "sum_account_credits/1 sum account credit postings" do
       account = insert(:debit_account)
       insert(:credit, amount: 2000, account: account)
@@ -240,17 +179,6 @@ defmodule BankingApi.BankTest do
   end
 
   describe "withdraws" do
-    test "list_withdraws/0 returns all withdraws" do
-      withdraw = insert(:withdraw)
-      assert [first_withdraw] = Bank.list_withdraws()
-      assert first_withdraw.id == withdraw.id
-    end
-
-    test "get_withdraw!/1 returns the withdraw with given id" do
-      withdraw = insert(:withdraw)
-      assert Bank.get_withdraw!(withdraw.id).id == withdraw.id
-    end
-
     test "create_withdraw/1 removes the drawn amount from user's balance" do
       user = insert(:user)
       checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
@@ -266,12 +194,12 @@ defmodule BankingApi.BankTest do
         user: user
       )
 
-      attrs = %{amount_cents: 50_000, user_id: user.id}
+      attrs = %{"amount_cents" => 50_000}
 
-      assert {:ok, %Withdraw{} = withdraw} = Bank.create_withdraw(attrs)
+      assert {:ok, %Transaction{} = withdraw} = Bank.create_withdraw(user, attrs)
       assert withdraw.amount_cents == Decimal.new(50_000)
-      assert withdraw.user.balance == Decimal.new(20_000)
-      assert withdraw.user.id == user.id
+      assert withdraw.from_user.balance == Decimal.new(20_000)
+      assert withdraw.from_user.id == user.id
       assert Bank.calculate_user_balance(user).balance == Decimal.new(20_000)
     end
 
@@ -284,7 +212,7 @@ defmodule BankingApi.BankTest do
 
       attrs = %{amount_cents: 50_000, user_id: user.id}
 
-      {:error, %Ecto.Changeset{} = changeset} = Bank.create_withdraw(attrs)
+      {:error, %Ecto.Changeset{} = changeset} = Bank.create_withdraw(user, attrs)
       refute changeset.valid?
       assert Bank.calculate_user_balance(user).balance == Decimal.new(30_000)
     end
@@ -300,5 +228,18 @@ defmodule BankingApi.BankTest do
 
   test "amount_to_cents/1 returns an amount in cents" do
     assert Bank.amount_to_cents(1000) == Decimal.new(100_000)
+  end
+
+  describe "transfers" do
+    test "sends the amount from from_user's balance to to_user's balance" do
+      from_user = insert(:user)
+      insert(:initial_accounts, user: from_user, user_balance: 100_000)
+      to_user = insert(:user)
+
+      Bank.create_transfer(from_user, %{"to" => to_user.email, "amount_cents" => 20_000})
+
+      assert Bank.calculate_user_balance(from_user).balance == Decimal.new(80_000)
+      assert Bank.calculate_user_balance(to_user).balance == Decimal.new(20_000)
+    end
   end
 end
