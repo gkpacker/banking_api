@@ -15,13 +15,6 @@ defmodule BankingApi.BankTest do
       {:ok, user: user, valid_attrs: %{@valid_attrs | user_id: user.id}}
     end
 
-    test "list_accounts/0 returns all accounts" do
-      account = insert(:debit_account)
-
-      assert [first_account] = Bank.list_accounts()
-      assert first_account.id == account.id
-    end
-
     test "get_account!/1 returns the account with given id" do
       account = insert(:debit_account)
 
@@ -125,19 +118,6 @@ defmodule BankingApi.BankTest do
   end
 
   describe "postings" do
-    test "list_postings/0 returns all postings" do
-      posting = insert(:credit)
-
-      assert [first_posting] = Bank.list_postings()
-      assert first_posting.id == posting.id
-    end
-
-    test "get_posting!/1 returns the posting with given id" do
-      posting = insert(:debit)
-
-      assert Bank.get_posting!(posting.id).id == posting.id
-    end
-
     test "sum_account_credits/1 sum account credit postings" do
       account = insert(:debit_account)
       insert(:credit, amount: 2000, account: account)

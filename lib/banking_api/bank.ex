@@ -11,19 +11,6 @@ defmodule BankingApi.Bank do
   alias BankingApi.Bank.{Account, Posting, Transaction}
 
   @doc """
-  Returns the list of accounts.
-
-  ## Examples
-
-      iex> list_accounts()
-      [%Account{}, ...]
-
-  """
-  def list_accounts do
-    Repo.all(Account)
-  end
-
-  @doc """
   Gets a single account.
 
   Raises `Ecto.NoResultsError` if the Account does not exist.
@@ -98,22 +85,6 @@ defmodule BankingApi.Bank do
   end
 
   @doc """
-  Gets a single transaction.
-
-  Raises `Ecto.NoResultsError` if the Transaction does not exist.
-
-  ## Examples
-
-      iex> get_transaction!(123)
-      %Transaction{}
-
-      iex> get_transaction!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_transaction!(id), do: Repo.get!(Transaction, id)
-
-  @doc """
   Creates a transaction.
 
   ## Examples
@@ -138,88 +109,6 @@ defmodule BankingApi.Bank do
       changeset ->
         changeset
     end
-  end
-
-  @doc """
-  Updates a transaction.
-
-  ## Examples
-
-      iex> update_transaction(transaction, %{field: new_value})
-      {:ok, %Transaction{}}
-
-      iex> update_transaction(transaction, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_transaction(%Transaction{} = transaction, attrs) do
-    transaction
-    |> Transaction.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a transaction.
-
-  ## Examples
-
-      iex> delete_transaction(transaction)
-      {:ok, %Transaction{}}
-
-      iex> delete_transaction(transaction)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_transaction(%Transaction{} = transaction) do
-    Repo.delete(transaction)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking transaction changes.
-
-  ## Examples
-
-      iex> change_transaction(transaction)
-      %Ecto.Changeset{data: %Transaction{}}
-
-  """
-  def change_transaction(%Transaction{} = transaction, attrs \\ %{}) do
-    Transaction.changeset(transaction, attrs)
-  end
-
-  @doc """
-  Returns the list of postings.
-
-  ## Examples
-
-      iex> list_postings()
-      [%Posting{}, ...]
-
-  """
-  def list_postings do
-    Posting
-    |> Repo.all()
-    |> Repo.preload([:account, :transaction])
-  end
-
-  @doc """
-  Gets a single posting.
-
-  Raises `Ecto.NoResultsError` if the Posting does not exist.
-
-  ## Examples
-
-      iex> get_posting!(123)
-      %Posting{}
-
-      iex> get_posting!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_posting!(id) do
-    Posting
-    |> Repo.get!(id)
-    |> Repo.preload([:account, :transaction])
   end
 
   @doc """

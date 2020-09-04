@@ -39,7 +39,7 @@ defmodule BankingApiWeb.Auth.Guardian do
   """
   def authenticate(email, password) do
     email
-    |> Accounts.get_by_email()
+    |> Accounts.get_user_by_email()
     |> authenticate_user(password)
   end
 
