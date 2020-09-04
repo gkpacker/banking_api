@@ -8,6 +8,7 @@ defmodule BankingApi.Bank.Transaction do
   """
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query, only: [from: 2]
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank
@@ -40,7 +41,7 @@ defmodule BankingApi.Bank.Transaction do
     |> validate_required([:name, :date, :amount_cents, :type])
     |> validate_number(:amount_cents, greater_than: 0)
     |> validate_inclusion(:type, @valid_types)
-    |> assoc_constraint(:from_user, required: true)
+    |> assoc_constraint(:from_user)
     |> assoc_constraint(:to_user)
     |> validate_from_user_balance
     |> validate_transaction_target

@@ -61,6 +61,14 @@ defmodule BankingApiWeb.Api.V1.TransferControllerTest do
              } = json_response(conn, 422)
     end
 
+    test "renders an error if user doesn't exists", %{conn: conn} do
+      attrs = %{to: "inexistent", amount_cents: 20_000}
+
+      conn = post(conn, Routes.transfer_path(conn, :create), transfer: attrs)
+
+      assert %{"error" => "not_found"} = json_response(conn, 404)
+    end
+
     test "amount must be greater than 0", %{conn: conn} do
       to_user = insert(:user)
 

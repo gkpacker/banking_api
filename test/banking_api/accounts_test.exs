@@ -18,9 +18,9 @@ defmodule BankingApi.AccountsTest do
       assert user.id == created_user.id
     end
 
-    test "get_user_by_email!/1 returns the user with given id" do
+    test "get_user_by_email/1 returns the user with given id" do
       created_user = insert(:user)
-      user = Accounts.get_user_by_email!(created_user.email)
+      {:ok, user} = Accounts.get_user_by_email(created_user.email)
 
       assert created_user.id == user.id
     end

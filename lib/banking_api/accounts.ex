@@ -55,26 +55,6 @@ defmodule BankingApi.Accounts do
   end
 
   @doc """
-  Gets a single user by email.
-
-  Raises `Ecto.NoResultsError` if the User does not exist.
-
-  ## Examples
-
-      iex> get_user_by_email!(123)
-      {:ok, %User{}}
-
-      iex> get_user_by_email(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_user_by_email!(email) do
-    User
-    |> Repo.get_by!(email: email)
-    |> Repo.preload(:accounts)
-  end
-
-  @doc """
   Creates a user.
 
   ## Examples
@@ -90,5 +70,15 @@ defmodule BankingApi.Accounts do
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user changes.
+  ## Examples
+      iex> change_user(user)
+      %Ecto.Changeset{data: %User{}}
+  """
+  def change_user(%User{} = user, attrs \\ %{}) do
+    User.changeset(user, attrs)
   end
 end

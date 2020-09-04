@@ -11,22 +11,6 @@ defmodule BankingApi.Bank do
   alias BankingApi.Bank.{Account, Posting, Transaction}
 
   @doc """
-  Gets a single account.
-
-  Raises `Ecto.NoResultsError` if the Account does not exist.
-
-  ## Examples
-
-      iex> get_account!(123)
-      %Account{}
-
-      iex> get_account!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_account!(id), do: Repo.get!(Account, id)
-
-  @doc """
   Gets an user account by name and lock it.
 
   ## Examples
@@ -235,7 +219,7 @@ defmodule BankingApi.Bank do
           name: "Initial Credit",
           date: Date.utc_today(),
           amount_cents: initial_credit_cents,
-          from_user_id: user.id,
+          to_user_id: user.id,
           type: "deposit",
           postings: [
             %{
@@ -250,10 +234,9 @@ defmodule BankingApi.Bank do
 
     case transaction_changeset do
       {:ok, transaction} ->
-        transaction = Repo.preload(transaction, :from_user)
+        transaction = Repo.preload(transaction, :to_user)
 
-        {:ok,
-         %Transaction{transaction | from_user: calculate_user_balance(transaction.from_user)}}
+        {:ok, %Transaction{transaction | to_user: calculate_user_balance(transaction.to_user)}}
 
       changeset ->
         changeset
@@ -319,14 +302,11 @@ defmodule BankingApi.Bank do
     end
   end
 
-  def create_transfer(%User{} = user, attrs \\ %{}) do
+  def create_transfer(%User{} = user, %User{} = to_user, attrs \\ %{}) do
     amount_cents = Map.get(attrs, "amount_cents")
-    to_user_email = Map.get(attrs, "to")
 
     {:ok, ecto_transaction} =
       Repo.transaction(fn ->
-        to_user = Accounts.get_user_by_email!(to_user_email)
-
         from_user_checking_account =
           get_and_lock_account(%{
             user_id: user.id,

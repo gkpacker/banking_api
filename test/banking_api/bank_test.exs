@@ -15,12 +15,6 @@ defmodule BankingApi.BankTest do
       {:ok, user: user, valid_attrs: %{@valid_attrs | user_id: user.id}}
     end
 
-    test "get_account!/1 returns the account with given id" do
-      account = insert(:debit_account)
-
-      assert Bank.get_account!(account.id).id == account.id
-    end
-
     test "create_account/1 with valid data creates a account", %{valid_attrs: valid_attrs} do
       assert {:ok, %Account{} = account} = Bank.create_account(valid_attrs)
       assert account.contra == false
@@ -112,7 +106,7 @@ defmodule BankingApi.BankTest do
         user: user
       )
 
-      assert {:ok, %Transaction{from_user: user}} = Bank.give_initial_credits_to_user(user)
+      assert {:ok, %Transaction{to_user: user}} = Bank.give_initial_credits_to_user(user)
       assert user.balance == Decimal.new(100_000)
     end
   end
@@ -236,7 +230,7 @@ defmodule BankingApi.BankTest do
       insert(:initial_accounts, user: from_user, user_balance: 100_000)
       to_user = insert(:user)
 
-      Bank.create_transfer(from_user, %{"to" => to_user.email, "amount_cents" => 20_000})
+      Bank.create_transfer(from_user, to_user, %{"amount_cents" => 20_000})
 
       assert Bank.calculate_user_balance(from_user).balance == Decimal.new(80_000)
       assert Bank.calculate_user_balance(to_user).balance == Decimal.new(20_000)
