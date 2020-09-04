@@ -6,6 +6,7 @@ defmodule BankingApi.Bank do
   import Ecto.Query, warn: false
   alias BankingApi.Repo
 
+  alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank.{Account, Posting, Transaction}
 
@@ -423,6 +424,53 @@ defmodule BankingApi.Bank do
 
         {:ok,
          %Transaction{transaction | from_user: calculate_user_balance(transaction.from_user)}}
+
+      changeset ->
+        changeset
+    end
+  end
+
+  def create_transfer(%User{} = user, attrs \\ %{}) do
+    amount_cents = Map.get(attrs, "amount_cents")
+    to_user_email = Map.get(attrs, "to")
+
+    {:ok, ecto_transaction} =
+      Repo.transaction(fn ->
+        to_user = Accounts.get_user_by_email!(to_user_email)
+
+        from_user_checking_account =
+          get_and_lock_account(%{
+            user_id: user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
+
+        to_user_checking_account =
+          get_and_lock_account(%{
+            user_id: to_user.id,
+            name: Account.checking_account_name(),
+            type: "asset"
+          })
+
+        create_transaction(%{
+          name: "Transfer",
+          date: Date.utc_today(),
+          amount_cents: amount_cents,
+          from_user_id: user.id,
+          to_user_id: to_user.id,
+          type: "transfer",
+          postings: [
+            %{type: "credit", account_id: from_user_checking_account.id, amount: amount_cents},
+            %{type: "debit", account_id: to_user_checking_account.id, amount: amount_cents}
+          ]
+        })
+      end)
+
+    case ecto_transaction do
+      {:ok, transaction} ->
+        transaction = Repo.preload(transaction, :from_user)
+
+        {:ok, %Transaction{transaction | from_user: calculate_user_balance(user)}}
 
       changeset ->
         changeset

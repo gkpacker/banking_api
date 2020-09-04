@@ -69,21 +69,9 @@ defmodule BankingApi.BankTest do
   end
 
   describe "transactions" do
-    test "list_transactions/0 returns all transactions" do
-      transaction = insert(:transaction)
-
-      assert Bank.list_transactions() == [transaction]
-    end
-
-    test "get_transaction!/1 returns the transaction with given id" do
-      transaction = insert(:transaction)
-
-      assert Bank.get_transaction!(transaction.id) == transaction
-    end
-
     test "create_transaction/1 creates associated posts" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
       credit_account = insert(:credit_account, user: user)
       debit_account = insert(:debit_account, user: user)
       date = Date.utc_today()
@@ -260,5 +248,18 @@ defmodule BankingApi.BankTest do
 
   test "amount_to_cents/1 returns an amount in cents" do
     assert Bank.amount_to_cents(1000) == Decimal.new(100_000)
+  end
+
+  describe "transfers" do
+    test "sends the amount from from_user's balance to to_user's balance" do
+      from_user = insert(:user)
+      insert(:initial_accounts, user: from_user, user_balance: 100_000)
+      to_user = insert(:user)
+
+      Bank.create_transfer(from_user, %{"to" => to_user.email, "amount_cents" => 20_000})
+
+      assert Bank.calculate_user_balance(from_user).balance == Decimal.new(80_000)
+      assert Bank.calculate_user_balance(to_user).balance == Decimal.new(20_000)
+    end
   end
 end

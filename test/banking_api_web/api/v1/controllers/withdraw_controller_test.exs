@@ -35,7 +35,7 @@ defmodule BankingApiWeb.Api.V1.WithdrawControllerTest do
     end
 
     test "it removes the amount from user's account", %{conn: conn, user: user} do
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
       conn = post(conn, Routes.withdraw_path(conn, :create), withdraw: @create_attrs)
 
       expected_email =

@@ -34,6 +34,7 @@ defmodule BankingApiWeb.Router do
     pipe_through [:api, :auth]
 
     resources "/withdraws", WithdrawController, only: [:create]
+    resources "/transfers", TransferController, only: [:create]
   end
 
   # Enables LiveDashboard only for development

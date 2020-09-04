@@ -79,11 +79,18 @@ defmodule BankingApi.Factory do
     }
   end
 
-  def user_with_initial_accounts_factory(attrs) do
+  def initial_accounts_factory(attrs) do
     user_balance = Map.get(attrs, :user_balance, 100_000)
     user = Map.get(attrs, :user, insert(:user))
     checking = insert(:debit_account, name: Account.checking_account_name(), user: user)
-    equity = insert(:credit_account, type: "equity", user: user)
+
+    equity =
+      insert(:credit_account,
+        name: Account.initial_credits_account_name(),
+        type: "equity",
+        user: user
+      )
+
     insert(:debit, amount: user_balance, account: checking)
     insert(:credit, amount: user_balance, account: equity)
 

@@ -21,7 +21,7 @@ defmodule BankingApi.Bank.TransactionTest do
 
     test "is valid when credits and debits postings balance" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
       credit_account = insert(:credit_account, user: user)
       debit_account = insert(:debit_account, user: user)
       date = Date.utc_today()
@@ -67,7 +67,7 @@ defmodule BankingApi.Bank.TransactionTest do
 
     test "isn't valid when credits and debits doesn't balance" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
       credit_account = insert(:credit_account, user: user)
       debit_account = insert(:debit_account, user: user)
       date = Date.utc_today()
@@ -103,7 +103,7 @@ defmodule BankingApi.Bank.TransactionTest do
 
     test "it's valid when user accounts balance" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
 
       changeset =
         Transaction.changeset(
@@ -123,7 +123,7 @@ defmodule BankingApi.Bank.TransactionTest do
 
     test "it isn's valid when user doesn't have suficient cash" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user, user_balance: 30_000)
+      insert(:initial_accounts, user: user, user_balance: 30_000)
 
       changeset =
         Transaction.changeset(
@@ -144,7 +144,7 @@ defmodule BankingApi.Bank.TransactionTest do
 
     test "creates a withdraw transaction when it's valid" do
       user = insert(:user)
-      insert(:user_with_initial_accounts, user: user)
+      insert(:initial_accounts, user: user)
       amount_cents = 50_000
 
       changeset =
