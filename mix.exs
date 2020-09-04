@@ -50,7 +50,10 @@ defmodule BankingApi.MixProject do
       {:bcrypt_elixir, "~> 2.0"},
       {:ex_machina, "~> 2.4", only: [:dev, :test]},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:bamboo, "~> 1.5"}
+      {:bamboo, "~> 1.5"},
+      {:calendar, "~> 1.0.0"},
+      {:csv, "~> 2.3"},
+      {:hound, "~> 1.0"}
     ]
   end
 

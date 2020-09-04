@@ -236,4 +236,28 @@ defmodule BankingApi.BankTest do
       assert Bank.calculate_user_balance(to_user).balance == Decimal.new(20_000)
     end
   end
+
+  test "transaction_report/1" do
+    user = insert(:user)
+    today = Date.utc_today()
+    last_year_date = Date.add(today, -366)
+    insert(:transaction, to_user: user, date: today, amount_cents: 100_000)
+    insert(:transaction, to_user: user, date: last_year_date, amount_cents: 200_000)
+    insert(:transaction, from_user: user, date: last_year_date, amount_cents: 100_000)
+    {:ok, formatted_today} = Calendar.Strftime.strftime(today, "%d/%m/%Y")
+    {:ok, formatted_last_year} = Calendar.Strftime.strftime(last_year_date, "%d/%m/%Y")
+    {:ok, today_mon_yy} = Calendar.Strftime.strftime(today, "%m/%Y")
+    {:ok, formatted_last_year_month} = Calendar.Strftime.strftime(last_year_date, "%m/%Y")
+
+    assert [
+             ["Period", "Received", "Sent"],
+             [formatted_last_year, "R$ 2000.00", "R$ 1000.00"],
+             [formatted_today, "R$ 1000.00", "R$ 0.00"],
+             [formatted_last_year_month, "R$ 2000.00", "R$ 1000.00"],
+             [today_mon_yy, "R$ 1000.00", "R$ 0.00"],
+             [to_string(last_year_date.year), "R$ 2000.00", "R$ 1000.00"],
+             [to_string(today.year), "R$ 1000.00", "R$ 0.00"],
+             ["Total", "R$ 3000.00", "R$ 1000.00"]
+           ] == Bank.transaction_report(user)
+  end
 end

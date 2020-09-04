@@ -64,8 +64,11 @@ defmodule BankingApi.Bank do
       [%Transaction{}, ...]
 
   """
-  def list_transactions do
-    Repo.all(Transaction)
+  def list_transactions_featuring_user(%User{} = user) do
+    Transaction
+    |> Transaction.featuring_user(user)
+    |> Repo.all()
+    |> Repo.preload([:from_user, :to_user])
   end
 
   @doc """
@@ -346,6 +349,8 @@ defmodule BankingApi.Bank do
     end
   end
 
+  def amount_from_cents(nil), do: Decimal.round(0, 2)
+
   @doc """
   Returns an amount from cents with 2 digits precision
 
@@ -371,4 +376,108 @@ defmodule BankingApi.Bank do
 
   """
   def amount_to_cents(amount), do: Decimal.new(amount * 100)
+
+  def transaction_report(%User{} = user) do
+    [["Period", "Received", "Sent"]] ++
+      report_rows_by_days(user) ++
+      report_rows_by_months(user) ++
+      report_rows_by_years(user) ++
+      total_transactions_report_row(user)
+  end
+
+  defp report_rows_by_days(%User{} = user) do
+    sent = amount_sent_by_days(user)
+    received = amount_received_by_days(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp report_rows_by_months(%User{} = user) do
+    sent = amount_sent_by_months(user)
+    received = amount_received_by_months(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp report_rows_by_years(%User{} = user) do
+    sent = amount_sent_by_years(user)
+    received = amount_received_by_years(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp total_transactions_report_row(%User{} = user) do
+    [sent] =
+      Transaction
+      |> Transaction.from_user(user)
+      |> Transaction.sum_amount_cents()
+      |> Repo.all()
+
+    [received] =
+      Transaction
+      |> Transaction.to_user(user)
+      |> Transaction.sum_amount_cents()
+      |> Repo.all()
+
+    [["Total", "R$ #{amount_from_cents(received)}", "R$ #{amount_from_cents(sent)}"]]
+  end
+
+  defp build_report_rows(sent, received) do
+    (Map.keys(sent) ++ Map.keys(received))
+    |> Stream.uniq()
+    |> Stream.map(
+      &{&1, %{sent: amount_from_cents(sent[&1]), received: amount_from_cents(received[&1])}}
+    )
+    |> Enum.map(fn {date, amounts} ->
+      [date, "R$ #{amounts[:received]}", "R$ #{amounts[:sent]}"]
+    end)
+  end
+
+  defp amount_sent_by_days(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_days()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_days(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_days()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_sent_by_months(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_months()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_months(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_months()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_sent_by_years(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_years()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_years(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_years()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
 end
