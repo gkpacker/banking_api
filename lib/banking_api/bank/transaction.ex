@@ -126,7 +126,7 @@ defmodule BankingApi.Bank.Transaction do
        )
        when type in [@withdraw, @transfer] do
     %User{balance: balance} =
-      Accounts.get_user!(from_user_id)
+      Accounts.get_user(from_user_id)
       |> Bank.calculate_user_balance()
 
     next_balance = Decimal.sub(balance, Decimal.new(amount_cents))
