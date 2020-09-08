@@ -16,7 +16,7 @@ config :banking_api, BankingApi.Repo,
 # you can enable the server option below.
 config :banking_api, BankingApiWeb.Endpoint,
   http: [port: 4002],
-  server: false
+  server: true
 
 # Print only warnings and errors during test
 config :logger, level: :warn

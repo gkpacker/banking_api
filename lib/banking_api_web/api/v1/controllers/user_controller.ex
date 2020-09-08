@@ -4,7 +4,7 @@ defmodule BankingApiWeb.Api.V1.UserController do
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank
-  alias BankingApi.Bank.{Account, Transaction}
+  alias BankingApi.Bank.Transaction
   alias BankingApiWeb.Auth.Guardian
 
   action_fallback BankingApiWeb.Api.V1.FallbackController

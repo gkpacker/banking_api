@@ -54,14 +54,15 @@ defmodule BankingApi.Factory do
   end
 
   def deposit_factory(attrs) do
-    user = Map.get(attrs, :account, insert(:user))
+    user = Map.get(attrs, :user, insert(:user))
     account = Map.get(attrs, :account, insert(:debit_account, user: user))
-    credit_account = Map.get(attrs, :credit_account, insert(:credit_account, user: user))
+    credit_account = Map.get(attrs, :credit_account, insert(:credit_account, user: user, type: "equity"))
 
     %Transaction{
       name: "Deposit",
       date: Date.utc_today(),
       amount_cents: 100_000,
+      to_user_id: user.id,
       type: "deposit",
       postings: [
         %{amount: 100_000, account_id: account.id, type: "debit"},
