@@ -26,7 +26,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :hound, driver: "phantomjs"
+config :hound, driver: "chrome_driver", browser: "chrome_headless", retries: 3
 
 config :banking_api, BankingApiWeb.Auth.Guardian,
   issuer: "banking_api",

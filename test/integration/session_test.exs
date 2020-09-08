@@ -17,13 +17,13 @@ defmodule BankingApi.SessionTest do
   end
 
   describe "logout" do
-    test "returns to login page", %{user: user}  do
+    test "returns to login page", %{user: user} do
       login(user)
 
       logout = find_element(:link_text, "Logout")
       click(logout)
 
-      assert current_path() == "/login"
+      assert search_element(:id, "user_email")
     end
   end
 
