@@ -12,14 +12,17 @@
 alias BankingApi.Bank
 alias BankingApi.Accounts
 
-{:ok, user} = Accounts.create_user(%{email: "user@email.com", password: "password"})
-{:ok, another_user} = Accounts.create_user(%{email: "another_user@email.com", password: "password"})
+if Mix.env() in [:dev, :production] do
+  {:ok, user} = Accounts.create_user(%{email: "user@bank.com", password: "password"})
 
-Bank.give_initial_credits_to_user(user)
-Bank.create_withdraw(user, %{"amount_cents" => 20_000})
-Bank.create_transfer(user, another_user, %{"amount_cents" => 40_000})
+  {:ok, another_user} =
+    Accounts.create_user(%{email: "another_user@bank.com", password: "password"})
 
-Bank.give_initial_credits_to_user(another_user)
-Bank.create_withdraw(another_user, %{"amount_cents" => 30_000})
-Bank.create_transfer(another_user, user, %{"amount_cents" => 50_000})
+  Bank.give_initial_credits_to_user(user)
+  Bank.create_withdraw(user, %{"amount_cents" => 20_000})
+  Bank.create_transfer(user, another_user, %{"amount_cents" => 40_000})
 
+  Bank.give_initial_credits_to_user(another_user)
+  Bank.create_withdraw(another_user, %{"amount_cents" => 30_000})
+  Bank.create_transfer(another_user, user, %{"amount_cents" => 50_000})
+end

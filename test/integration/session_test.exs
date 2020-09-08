@@ -2,7 +2,7 @@ defmodule BankingApi.SessionTest do
   use BankingApi.IntegrationCase
 
   setup do
-    Hound.start_session
+    Hound.start_session()
     user = insert(:user)
 
     %{user: user}

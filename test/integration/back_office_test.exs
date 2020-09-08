@@ -2,7 +2,7 @@ defmodule BankingApi.BackOfficeTest do
   use BankingApi.IntegrationCase
 
   setup do
-    Hound.start_session
+    Hound.start_session()
     :ok
   end
 
