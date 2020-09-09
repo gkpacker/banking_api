@@ -4,14 +4,19 @@ services:
   phoenix:
     build:
       context: .
+      args:
+        - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+        - HOST=${HOST}
+        - PORT=${PORT}
     environment:
       PG_USER: postgres
       PG_PASSWORD: postgres
-      POSTGRES_DATABASE: banking_api_dev
+      POSTGRES_DATABASE: banking_api_prod
       POSTGRES_PORT: 5432
-      DATABASE_URL: ecto://postgres:postgres@db/banking_api_dev
+      DATABASE_URL: ecto://postgres:postgres@db/banking_api_prod
+      MIX_ENV: prod
     ports:
-      - "4000:4000"
+      - "5000:5000"
     depends_on:
       - db
   db:

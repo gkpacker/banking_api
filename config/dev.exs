@@ -1,20 +1,12 @@
 use Mix.Config
 
-database_url = System.get_env("DATABASE_URL")
-
-if database_url do
-  config :banking_api, BankingApi.Repo,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
-else
-  config :banking_api, BankingApi.Repo,
-    username: "postgres",
-    password: "postgres",
-    database: "banking_api_dev",
-    hostname: "localhost",
-    show_sensitive_data_on_connection_error: true,
-    pool_size: 10
-end
+config :banking_api, BankingApi.Repo,
+  username: "postgres",
+  password: "postgres",
+  database: "banking_api_dev",
+  hostname: "localhost",
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 10
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
