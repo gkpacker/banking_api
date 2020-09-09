@@ -6,25 +6,8 @@ defmodule BankingApi.Bank do
   import Ecto.Query, warn: false
   alias BankingApi.Repo
 
-  alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank.{Account, Posting, Transaction}
-
-  @doc """
-  Gets a single account.
-
-  Raises `Ecto.NoResultsError` if the Account does not exist.
-
-  ## Examples
-
-      iex> get_account!(123)
-      %Account{}
-
-      iex> get_account!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_account!(id), do: Repo.get!(Account, id)
 
   @doc """
   Gets an user account by name and lock it.
@@ -80,8 +63,11 @@ defmodule BankingApi.Bank do
       [%Transaction{}, ...]
 
   """
-  def list_transactions do
-    Repo.all(Transaction)
+  def list_transactions_featuring_user(%User{} = user) do
+    Transaction
+    |> Transaction.featuring_user(user)
+    |> Repo.all()
+    |> Repo.preload([:from_user, :to_user])
   end
 
   @doc """
@@ -235,7 +221,7 @@ defmodule BankingApi.Bank do
           name: "Initial Credit",
           date: Date.utc_today(),
           amount_cents: initial_credit_cents,
-          from_user_id: user.id,
+          to_user_id: user.id,
           type: "deposit",
           postings: [
             %{
@@ -250,10 +236,9 @@ defmodule BankingApi.Bank do
 
     case transaction_changeset do
       {:ok, transaction} ->
-        transaction = Repo.preload(transaction, :from_user)
+        transaction = Repo.preload(transaction, :to_user)
 
-        {:ok,
-         %Transaction{transaction | from_user: calculate_user_balance(transaction.from_user)}}
+        {:ok, %Transaction{transaction | to_user: calculate_user_balance(transaction.to_user)}}
 
       changeset ->
         changeset
@@ -319,14 +304,11 @@ defmodule BankingApi.Bank do
     end
   end
 
-  def create_transfer(%User{} = user, attrs \\ %{}) do
+  def create_transfer(%User{} = user, %User{} = to_user, attrs \\ %{}) do
     amount_cents = Map.get(attrs, "amount_cents")
-    to_user_email = Map.get(attrs, "to")
 
     {:ok, ecto_transaction} =
       Repo.transaction(fn ->
-        to_user = Accounts.get_user_by_email!(to_user_email)
-
         from_user_checking_account =
           get_and_lock_account(%{
             user_id: user.id,
@@ -366,6 +348,8 @@ defmodule BankingApi.Bank do
     end
   end
 
+  def amount_from_cents(nil), do: Decimal.round(0, 2)
+
   @doc """
   Returns an amount from cents with 2 digits precision
 
@@ -391,4 +375,108 @@ defmodule BankingApi.Bank do
 
   """
   def amount_to_cents(amount), do: Decimal.new(amount * 100)
+
+  def transaction_report(%User{} = user) do
+    [["Period", "Received", "Sent"]] ++
+      report_rows_by_days(user) ++
+      report_rows_by_months(user) ++
+      report_rows_by_years(user) ++
+      total_transactions_report_row(user)
+  end
+
+  defp report_rows_by_days(%User{} = user) do
+    sent = amount_sent_by_days(user)
+    received = amount_received_by_days(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp report_rows_by_months(%User{} = user) do
+    sent = amount_sent_by_months(user)
+    received = amount_received_by_months(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp report_rows_by_years(%User{} = user) do
+    sent = amount_sent_by_years(user)
+    received = amount_received_by_years(user)
+
+    build_report_rows(sent, received)
+  end
+
+  defp total_transactions_report_row(%User{} = user) do
+    [sent] =
+      Transaction
+      |> Transaction.from_user(user)
+      |> Transaction.sum_amount_cents()
+      |> Repo.all()
+
+    [received] =
+      Transaction
+      |> Transaction.to_user(user)
+      |> Transaction.sum_amount_cents()
+      |> Repo.all()
+
+    [["Total", "R$ #{amount_from_cents(received)}", "R$ #{amount_from_cents(sent)}"]]
+  end
+
+  defp build_report_rows(sent, received) do
+    (Map.keys(sent) ++ Map.keys(received))
+    |> Stream.uniq()
+    |> Stream.map(
+      &{&1, %{sent: amount_from_cents(sent[&1]), received: amount_from_cents(received[&1])}}
+    )
+    |> Enum.map(fn {date, amounts} ->
+      [date, "R$ #{amounts[:received]}", "R$ #{amounts[:sent]}"]
+    end)
+  end
+
+  defp amount_sent_by_days(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_days()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_days(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_days()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_sent_by_months(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_months()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_months(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_months()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_sent_by_years(%User{} = user) do
+    Transaction
+    |> Transaction.from_user(user)
+    |> Transaction.amount_grouped_by_years()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
+
+  defp amount_received_by_years(%User{} = user) do
+    Transaction
+    |> Transaction.to_user(user)
+    |> Transaction.amount_grouped_by_years()
+    |> Repo.all()
+    |> Map.new(fn [k, v] -> {k, v} end)
+  end
 end

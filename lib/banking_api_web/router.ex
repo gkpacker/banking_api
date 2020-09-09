@@ -13,14 +13,31 @@ defmodule BankingApiWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :auth do
+  pipeline :browser_auth do
     plug BankingApiWeb.Auth.Pipeline
   end
 
-  scope "/", BankingApiWeb do
-    pipe_through :browser
+  pipeline :ensure_authenticated do
+    plug Guardian.Plug.EnsureAuthenticated
+  end
 
-    get "/", PageController, :index
+  pipeline :api_auth do
+    plug BankingApiWeb.Api.Auth.Pipeline
+  end
+
+  scope "/", BankingApiWeb do
+    pipe_through [:browser, :browser_auth]
+
+    get "/login", SessionController, :new
+    post "/login", SessionController, :create
+    delete "/logout", SessionController, :delete
+  end
+
+  scope "/", BankingApiWeb do
+    pipe_through [:browser, :browser_auth, :ensure_authenticated]
+
+    get "/", BackOfficeController, :index
+    put "/export", BackOfficeController, :export
   end
 
   scope "/api/v1", BankingApiWeb.Api.V1 do
@@ -31,7 +48,7 @@ defmodule BankingApiWeb.Router do
   end
 
   scope "/api/v1", BankingApiWeb.Api.V1 do
-    pipe_through [:api, :auth]
+    pipe_through [:api, :api_auth]
 
     resources "/withdraws", WithdrawController, only: [:create]
     resources "/transfers", TransferController, only: [:create]

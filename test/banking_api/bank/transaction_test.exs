@@ -161,4 +161,72 @@ defmodule BankingApi.Bank.TransactionTest do
       assert changeset.valid?
     end
   end
+
+  test "Transaction.amount_grouped_by_days/1" do
+    today = Date.utc_today()
+    yesterday = Date.add(today, -1)
+    insert(:transaction, date: today)
+    insert(:transaction, date: yesterday)
+    insert(:transaction, date: yesterday)
+
+    result =
+      Transaction
+      |> Transaction.amount_grouped_by_days()
+      |> BankingApi.Repo.all()
+
+    {:ok, today_date} = Calendar.Strftime.strftime(today, "%d/%m/%Y")
+    {:ok, yesterday_date} = Calendar.Strftime.strftime(yesterday, "%d/%m/%Y")
+
+    assert [
+             [today_date, Decimal.new(1000)],
+             [yesterday_date, Decimal.new(2000)]
+           ] == result
+  end
+
+  test "Transaction.amount_grouped_by_months/1" do
+    today = Date.utc_today()
+    last_month_date = Date.add(today, -31)
+    insert(:transaction, date: today)
+    insert(:transaction, date: today)
+    insert(:transaction, date: last_month_date)
+
+    result =
+      Transaction
+      |> Transaction.amount_grouped_by_months()
+      |> BankingApi.Repo.all()
+
+    {:ok, mon_yy} = Calendar.Strftime.strftime(today, "%m/%Y")
+    {:ok, last_mon_yy} = Calendar.Strftime.strftime(last_month_date, "%m/%Y")
+
+    assert [
+             [mon_yy, Decimal.new(2000)],
+             [last_mon_yy, Decimal.new(1000)]
+           ] == result
+  end
+
+  test "Transaction.from_user/2" do
+    user = insert(:user)
+    transaction_from_user = insert(:transaction, from_user: user)
+    insert(:transaction, to_user: user)
+
+    [transaction] =
+      Transaction
+      |> Transaction.from_user(user)
+      |> BankingApi.Repo.all()
+
+    assert transaction.id == transaction_from_user.id
+  end
+
+  test "Transaction.to_user/2" do
+    user = insert(:user)
+    insert(:transaction, from_user: user)
+    transaction_to_user = insert(:transaction, to_user: user)
+
+    [transaction] =
+      Transaction
+      |> Transaction.to_user(user)
+      |> BankingApi.Repo.all()
+
+    assert transaction.id == transaction_to_user.id
+  end
 end

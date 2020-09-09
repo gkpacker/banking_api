@@ -4,12 +4,13 @@ defmodule BankingApiWeb.Auth.ErrorHandler do
   """
 
   import Plug.Conn
+  use BankingApiWeb, :controller
 
   def auth_error(conn, {type, _reason}, _opts) do
-    body = Jason.encode!(%{error: to_string(type)})
+    body = to_string(type)
 
     conn
-    |> put_resp_content_type("application/json")
-    |> send_resp(401, body)
+    |> put_flash(:error, body)
+    |> redirect(to: "/login")
   end
 end

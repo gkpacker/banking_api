@@ -11,16 +11,16 @@ defmodule BankingApi.AccountsTest do
     @invalid_email_attrs %{email: 'email', password: "password"}
     @invalid_password_attrs %{email: 'user@email.com', password: "short"}
 
-    test "get_user!/1 returns the user with given id" do
+    test "get_user/1 returns the user with given id" do
       created_user = insert(:user)
-      user = Accounts.get_user!(created_user.id)
+      user = Accounts.get_user(created_user.id)
 
       assert user.id == created_user.id
     end
 
-    test "get_user_by_email!/1 returns the user with given id" do
+    test "get_user_by_email/1 returns the user with given id" do
       created_user = insert(:user)
-      user = Accounts.get_user_by_email!(created_user.email)
+      {:ok, user} = Accounts.get_user_by_email(created_user.email)
 
       assert created_user.id == user.id
     end

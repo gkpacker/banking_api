@@ -38,7 +38,7 @@ jobs:
     - name: Create database
       run: mix ecto.setup
     - name: Run tests
-      run: mix test
+      run: chromedriver & mix test
     - name: Check format
       run: mix format --check-formatted
     - name: Run credo

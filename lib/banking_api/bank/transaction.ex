@@ -8,6 +8,7 @@ defmodule BankingApi.Bank.Transaction do
   """
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query, only: [from: 2]
   alias BankingApi.Accounts
   alias BankingApi.Accounts.User
   alias BankingApi.Bank
@@ -40,12 +41,70 @@ defmodule BankingApi.Bank.Transaction do
     |> validate_required([:name, :date, :amount_cents, :type])
     |> validate_number(:amount_cents, greater_than: 0)
     |> validate_inclusion(:type, @valid_types)
-    |> assoc_constraint(:from_user, required: true)
+    |> assoc_constraint(:from_user)
     |> assoc_constraint(:to_user)
     |> validate_from_user_balance
     |> validate_transaction_target
     |> cast_assoc(:postings, required: true)
     |> validate_postings_balance
+  end
+
+  @doc """
+  Sums all transactions in a query
+  """
+  def sum_amount_cents(query \\ Transaction) do
+    from t in query, select: sum(t.amount_cents)
+  end
+
+  @doc """
+  Gets all transactions with its amount summed, grouped and ordered by days
+  """
+  def amount_grouped_by_days(query \\ Transaction) do
+    from t in query,
+      select: [fragment("to_char(?, 'DD/MM/YYYY') as day", t.date), sum(t.amount_cents)],
+      group_by: fragment("day"),
+      order_by: [desc: fragment("day")]
+  end
+
+  @doc """
+  Gets all transactions with its amount summed, grouped and ordered by months
+  """
+  def amount_grouped_by_months(query \\ Transaction) do
+    from t in query,
+      select: [fragment("to_char(?, 'MM/YYYY') as month", t.date), sum(t.amount_cents)],
+      group_by: fragment("month"),
+      order_by: [desc: fragment("month")]
+  end
+
+  @doc """
+  Gets all transactions with its amount summed, grouped and ordered by years
+  """
+  def amount_grouped_by_years(query \\ Transaction) do
+    from t in query,
+      select: [fragment("to_char(?, 'YYYY') as year", t.date), sum(t.amount_cents)],
+      group_by: fragment("year"),
+      order_by: [desc: fragment("year")]
+  end
+
+  @doc """
+  Gets all transactions relating to an user
+  """
+  def featuring_user(query \\ Transaction, %User{} = user) do
+    from t in query, where: t.from_user_id == ^user.id or t.to_user_id == ^user.id
+  end
+
+  @doc """
+  Gets all transactions sent from the user
+  """
+  def from_user(query \\ Transaction, %User{} = user) do
+    from t in query, where: t.from_user_id == ^user.id
+  end
+
+  @doc """
+  Gets all transactions received by the user
+  """
+  def to_user(query \\ Transaction, %User{} = user) do
+    from t in query, where: t.to_user_id == ^user.id
   end
 
   defp validate_transaction_target(
@@ -67,7 +126,7 @@ defmodule BankingApi.Bank.Transaction do
        )
        when type in [@withdraw, @transfer] do
     %User{balance: balance} =
-      Accounts.get_user!(from_user_id)
+      Accounts.get_user(from_user_id)
       |> Bank.calculate_user_balance()
 
     next_balance = Decimal.sub(balance, Decimal.new(amount_cents))

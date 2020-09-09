@@ -1,0 +1,26 @@
+<h1>Hey, <%= @user.email %>!</h1>
+<h3>Your balance is R$ <%= amount_from_cents(@user.balance) %></h3>
+<table style="width:100%">
+  <tr>
+    <th>Name</th>
+    <th>Amount</th>
+    <th>Type</th>
+    <th>From</th>
+    <th>To</th>
+    <th>Date</th>
+  </tr>
+  <%= for transaction <- @transactions do %>
+    <tr>
+      <td><%= transaction.name %></td>
+      <td>R$ <%= amount_from_cents(transaction.amount_cents) %></td>
+      <td><%= transaction.type %></td>
+      <td><%= transaction_target(transaction.from_user) %></td>
+      <td><%= transaction_target(transaction.to_user) %></td>
+      <td><%= transaction.date %></td>
+    </tr>
+  <% end %>
+</table>
+<%= link to: Routes.back_office_path(@conn, :export), method: :put do %>
+  Export
+<% end %>
+<span><%= link "Logout", to: Routes.session_path(@conn, :delete), method: :delete %></span>
