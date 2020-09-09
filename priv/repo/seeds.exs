@@ -12,7 +12,9 @@
 alias BankingApi.Bank
 alias BankingApi.Accounts
 
-if Mix.env() in [:dev, :production] do
+if Mix.env() in [:dev, :prod] do
+  IO.puts("Running seeds on #{Mix.env()} env")
+
   {:ok, user} = Accounts.create_user(%{email: "user@bank.com", password: "password"})
 
   {:ok, another_user} =
@@ -25,4 +27,6 @@ if Mix.env() in [:dev, :production] do
   Bank.give_initial_credits_to_user(another_user)
   Bank.create_withdraw(another_user, %{"amount_cents" => 30_000})
   Bank.create_transfer(another_user, user, %{"amount_cents" => 50_000})
+
+  IO.puts("Created #{user.email} and #{another_user.email} with default password.")
 end
