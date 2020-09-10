@@ -41,5 +41,5 @@ jobs:
       run: mix format --check-formatted
     - name: Run credo
       run: mix credo --strict
-    - name: Run tests
+    - name: Run tests & collect coverage
       run: chromedriver & mix coveralls.github
