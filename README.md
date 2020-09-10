@@ -6,6 +6,8 @@ Users can register, sign in, transfer and withdraw money from it.
 
 When an User sign up, he receives R$1000,00.
 
+When withdrawing, the user receives an email. (Setup only on dev)
+
 Users can't have negative balance.
 
 As an User, you can login on the BackOffice and export a CSV File with all your transactions.
