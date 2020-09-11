@@ -10,7 +10,13 @@ COPY . .
 
 # Update and install packages
 RUN apk update && \
-apk add -u musl musl-dev musl-utils nodejs-npm build-base erlang
+apk add -u alpine-sdk \
+           musl \
+           musl-dev \
+           musl-utils \
+           nodejs-npm \
+           build-base \
+           erlang
 
 # Add local node module binaries to PATH
 ENV PATH=./assets/node_modules/.bin:$PATH
