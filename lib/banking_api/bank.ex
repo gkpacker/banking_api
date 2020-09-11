@@ -218,7 +218,6 @@ defmodule BankingApi.Bank do
         initial_credit_cents = amount_to_cents(1000)
 
         create_transaction(%{
-          name: "Initial Credit",
           date: Date.utc_today(),
           amount_cents: initial_credit_cents,
           to_user_id: user.id,
@@ -280,7 +279,6 @@ defmodule BankingApi.Bank do
           })
 
         create_transaction(%{
-          name: "Withdraw",
           date: Date.utc_today(),
           amount_cents: amount_cents,
           from_user_id: user.id,
@@ -324,7 +322,6 @@ defmodule BankingApi.Bank do
           })
 
         create_transaction(%{
-          name: "Transfer",
           date: Date.utc_today(),
           amount_cents: amount_cents,
           from_user_id: user.id,

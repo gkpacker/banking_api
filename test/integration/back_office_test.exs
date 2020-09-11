@@ -49,7 +49,7 @@ defmodule BankingApi.BackOfficeTest do
     defp transaction_on_the_table?(transaction, table) do
       table
       |> visible_text
-      |> String.contains?(transaction.name)
+      |> String.contains?(to_string(transaction.id))
     end
 
     defp transaction_table_items do

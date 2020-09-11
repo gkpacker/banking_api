@@ -3,8 +3,8 @@ defmodule BankingApi.Bank.TransactionTest do
   alias BankingApi.Bank.Transaction
 
   describe "Transaction.changeset/2" do
-    @without_postings %{name: "Name", date: ~D[2000-03-10]}
-    @invalid_attrs %{name: nil, date: nil}
+    @without_postings %{date: ~D[2000-03-10]}
+    @invalid_attrs %{date: nil}
 
     test "isn't valid without postings" do
       changeset = Transaction.changeset(%Transaction{}, @without_postings)
@@ -12,10 +12,10 @@ defmodule BankingApi.Bank.TransactionTest do
       assert "can't be blank" in errors_on(changeset).postings
     end
 
-    test "isn't valid without name and date" do
+    test "isn't valid without type and date" do
       changeset = Transaction.changeset(%Transaction{}, @invalid_attrs)
 
-      assert "can't be blank" in errors_on(changeset).name
+      assert "can't be blank" in errors_on(changeset).type
       assert "can't be blank" in errors_on(changeset).date
     end
 
@@ -27,7 +27,6 @@ defmodule BankingApi.Bank.TransactionTest do
       date = Date.utc_today()
 
       params = %{
-        name: "Dinner",
         date: date,
         amount_cents: 1000,
         type: "transfer",
@@ -48,7 +47,6 @@ defmodule BankingApi.Bank.TransactionTest do
       date = Date.utc_today()
 
       params = %{
-        name: "Dinner",
         date: date,
         amount_cents: 1000,
         type: "transfer",
@@ -73,7 +71,6 @@ defmodule BankingApi.Bank.TransactionTest do
       date = Date.utc_today()
 
       params = %{
-        name: "Dinner",
         date: date,
         type: "transfer",
         amount_cents: 1000,
@@ -94,7 +91,6 @@ defmodule BankingApi.Bank.TransactionTest do
     @withdraw "withdraw"
     @valid_withdraw_attrs %{
       type: @withdraw,
-      name: @withdraw,
       date: ~D[2000-03-10],
       amount_cents: 50_000,
       from_user_id: 1,

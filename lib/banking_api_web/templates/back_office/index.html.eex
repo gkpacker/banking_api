@@ -2,7 +2,7 @@
 <h3>Your balance is R$ <%= amount_from_cents(@user.balance) %></h3>
 <table style="width:100%">
   <tr>
-    <th>Name</th>
+    <th>Id</th>
     <th>Amount</th>
     <th>Type</th>
     <th>From</th>
@@ -11,7 +11,7 @@
   </tr>
   <%= for transaction <- @transactions do %>
     <tr>
-      <td><%= transaction.name %></td>
+      <td><%= transaction.id %></td>
       <td>R$ <%= amount_from_cents(transaction.amount_cents) %></td>
       <td><%= transaction.type %></td>
       <td><%= transaction_target(transaction.from_user) %></td>
