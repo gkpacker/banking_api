@@ -6,7 +6,7 @@ Users can register, sign in, transfer and withdraw money from it.
 
 When an User sign up, he receives R$1000,00.
 
-When withdrawing, the user receives an email. (Only on dev)
+When withdrawing, the user receives an email. (Only on dev, check how to test below)
 
 Users can't have negative balance.
 
@@ -50,6 +50,8 @@ docker-compose up web
 And you're ready to go! 🚀
 
 Check your http://localhost:4000!
+
+When withdrawing money, you should "receive" an email. You can check sent emails at: http://localhost:4000/sent_emails
 
 ## Running tests
 You can run BankingApi tests with:
