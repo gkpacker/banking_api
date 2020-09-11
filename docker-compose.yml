@@ -1,24 +1,24 @@
 version: '3'
 
 services:
-  phoenix:
+  web:
     build:
       context: .
       args:
         - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-        - HOST=${HOST}
-        - PORT=${PORT}
+    command: mix phx.server
     environment:
       PG_USER: postgres
       PG_PASSWORD: postgres
-      POSTGRES_DATABASE: banking_api_prod
-      POSTGRES_PORT: 5432
-      DATABASE_URL: ecto://postgres:postgres@db/banking_api_prod
-      MIX_ENV: prod
+      PG_HOST: db
+      MIX_ENV: dev
+      PORT: 4000
     ports:
-      - "5000:5000"
+      - "4000:4000"
     depends_on:
       - db
+    volumes:
+      - web:/opt/app
   db:
     image: postgres:9.6
     healthcheck:
@@ -33,5 +33,27 @@ services:
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
+  test:
+    image: banking_api_web
+    command: mix test
+    environment:
+      MIX_ENV: test
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_HOST: db
+    volumes:
+      - web:/opt/app
+    depends_on:
+      - db
+      - chromedriver
+  chromedriver:
+    image: robcherry/docker-chromedriver:latest
+    restart: always
+    environment:
+      CHROMEDRIVER_PORT: 9515
+    ports:
+      - "9515:9515"
+    command: "chromedriver --no-sandbox --disable-gpu --verbose"
 volumes:
   pgdata:
+  web:

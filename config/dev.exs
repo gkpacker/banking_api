@@ -1,10 +1,10 @@
 use Mix.Config
 
 config :banking_api, BankingApi.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: System.get_env("PG_USER") || "postgres",
+  password: System.get_env("PG_PASSWORD") || "postgres",
   database: "banking_api_dev",
-  hostname: "localhost",
+  hostname: System.get_env("PG_HOST") || "localhost",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 

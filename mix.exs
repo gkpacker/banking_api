@@ -60,7 +60,7 @@ defmodule BankingApi.MixProject do
       {:bamboo, "~> 1.5"},
       {:calendar, "~> 1.0.0"},
       {:csv, "~> 2.3"},
-      {:hound, "~> 1.0", only: :test},
+      {:hound, "~> 1.1", only: :test},
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end

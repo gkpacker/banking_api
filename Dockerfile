@@ -1,16 +1,25 @@
 FROM bitwalker/alpine-elixir-phoenix:1.10.2
 
 ARG SECRET_KEY_BASE
-ARG HOST
-ARG PORT
 
 # Set exposed ports
-EXPOSE ${PORT}
-ENV MIX_ENV=prod
-ENV DATABASE_URL=ecto://postgres:postgres@db/banking_api_prod
+EXPOSE 4000
 ENV SECRET_KEY_BASE=${SECRET_KEY_BASE}
-ENV HOST=${HOST}
-ENV PORT=${PORT}
+
+COPY . .
+
+# Update and install packages
+RUN apk update && \
+apk add -u alpine-sdk \
+           musl \
+           musl-dev \
+           musl-utils \
+           nodejs-npm \
+           build-base \
+           erlang
+
+# Add local node module binaries to PATH
+ENV PATH=./assets/node_modules/.bin:$PATH
 
 # Cache elixir deps
 ADD mix.exs mix.lock ./
@@ -19,16 +28,13 @@ RUN mix do deps.get, deps.compile
 # Same with npm deps
 ADD assets/package.json assets/
 RUN cd assets && \
-    npm install
+    npm install && \
+    cd .. && \
+    mix phx.digest
 
-ADD . .
-
+# Install hex package manager
+# By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force
 
-# Run frontend build, compile, and digest assets
-RUN cd assets/ && \
-    npm run deploy && \
-    cd - && \
-    mix do compile, phx.digest
-
-CMD ["./entrypoint.sh"]
+ENTRYPOINT [ "./entrypoint.sh" ]
+CMD [ "foreground" ]
