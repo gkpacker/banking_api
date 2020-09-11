@@ -1,4 +1,4 @@
-# BankingApi [![Actions Status](https://github.com/gkpacker/banking_api/workflows/Elixir%20CI/badge.svg)](https://github.com/gkpacker/banking_api/actions)
+# BankingApi [![Actions Status](https://github.com/gkpacker/banking_api/workflows/Elixir%20CI/badge.svg)](https://github.com/gkpacker/banking_api/actions) [![Coverage Status](https://coveralls.io/repos/github/gkpacker/banking_api/badge.svg)](https://coveralls.io/github/gkpacker/banking_api)
 ## API
 The BankingApi docs are hosted on [postman](https://documenter.getpostman.com/view/4048367/TVCjwkrU)
 
