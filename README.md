@@ -6,7 +6,7 @@ Users can register, sign in, transfer and withdraw money from it.
 
 When an User sign up, he receives R$1000,00.
 
-When withdrawing, the user receives an email. (Setup only on dev)
+When withdrawing, the user receives an email. (Only on dev)
 
 Users can't have negative balance.
 
@@ -45,11 +45,20 @@ mix do deps.get, phx.gen.secret
 Then, run:
 ```bash
 docker-compose build
-docker-compose up
+docker-compose up web
 ```
 And you're ready to go! 🚀
 
-Check your http://localhost:5000 or the `HOST:PORT` defined in your `.env`
+Check your http://localhost:4000!
+
+## Running tests
+You can run BankingApi tests with:
+
+```bash
+docker-compose run --rm test
+```
+
+Sadly, I didn't figured out how to setup `chromedriver` as a service for integration tests, but as soon as I learn, I'll update this repo!
 
 ## Attention Points
 I've followed [this article](https://beancount.github.io/docs/the_double_entry_counting_method.html#introduction) to name models, not sure if they're the best, but at least I'm able to share this document in order to facilitate understanding of the domain.
