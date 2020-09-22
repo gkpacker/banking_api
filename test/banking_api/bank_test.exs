@@ -64,7 +64,6 @@ defmodule BankingApi.BankTest do
       date = Date.utc_today()
 
       params = %{
-        name: "Dinner",
         date: date,
         from_user_id: user.id,
         type: "transfer",
@@ -77,7 +76,6 @@ defmodule BankingApi.BankTest do
 
       assert {:ok, %Transaction{} = transaction} = Bank.create_transaction(params)
       assert transaction.date == date
-      assert transaction.name == "Dinner"
 
       assert [
                %Posting{type: "debit"} = debit_posting,

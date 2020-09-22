@@ -46,7 +46,6 @@ defmodule BankingApi.Factory do
 
   def transaction_factory do
     %Transaction{
-      name: "Dinner",
       date: ~D[2000-03-10],
       amount_cents: 1000,
       type: "withdraw"
@@ -61,7 +60,6 @@ defmodule BankingApi.Factory do
       Map.get(attrs, :credit_account, insert(:credit_account, user: user, type: "equity"))
 
     %Transaction{
-      name: "Deposit",
       date: Date.utc_today(),
       amount_cents: 100_000,
       to_user_id: user.id,

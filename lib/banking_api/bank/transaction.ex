@@ -14,7 +14,7 @@ defmodule BankingApi.Bank.Transaction do
   alias BankingApi.Bank
   alias BankingApi.Bank.Posting
 
-  @fields [:name, :date, :amount_cents, :type, :from_user_id, :to_user_id]
+  @fields [:date, :amount_cents, :type, :from_user_id, :to_user_id]
 
   @transfer "transfer"
   @deposit "deposit"
@@ -23,7 +23,6 @@ defmodule BankingApi.Bank.Transaction do
 
   schema "transactions" do
     field :date, :date
-    field :name, :string
     field :type, :string
     field :amount_cents, :decimal
 
@@ -38,7 +37,7 @@ defmodule BankingApi.Bank.Transaction do
   def changeset(transaction, attrs) do
     transaction
     |> cast(attrs, @fields)
-    |> validate_required([:name, :date, :amount_cents, :type])
+    |> validate_required([:date, :amount_cents, :type])
     |> validate_number(:amount_cents, greater_than: 0)
     |> validate_inclusion(:type, @valid_types)
     |> assoc_constraint(:from_user)
